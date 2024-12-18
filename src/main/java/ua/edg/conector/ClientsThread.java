@@ -105,7 +105,6 @@ public class ClientsThread extends Thread {
     catch (IOException|ClassNotFoundException | IllegalAccessException | 
     IllegalArgumentException | InvocationTargetException | 
     NoSuchMethodException | SecurityException | InstantiationException ex) {
-      ex.printStackTrace();
     }
   }
   private List<Externalizable> getResult(Class<?> clazz, String method_str,
