@@ -12,11 +12,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
  import javax.swing.SwingUtilities;
-import transimpex.CommandQuery;
-import transimpex.QuickObjectArray;
-import transimpex.Title;
- import transimpex.WrapAgent;
-import transimpex.schaduleVacation.dto.SchedulePeriodUser;
+
+ import transimpex.*;
+ import transimpex.schaduleVacation.dto.SchedulePeriodUser;
  import ua.edg.logparser.gui.Panel;
 
 import static ua.edg.conector.Utilities.PROJECT_PATH;
@@ -33,16 +31,16 @@ public class ClientsThread extends Thread {
     try(Socket ss = socket){
       ObjectInputStream ois = new ObjectInputStream(ss.getInputStream());
       ObjectOutputStream oos = new ObjectOutputStream(ss.getOutputStream());
-      List multyTask = (List)ois.readObject();
+      List<?> multiTask = (List<?>)ois.readObject();
       SwingUtilities.invokeLater(() -> {
         Panel.globalLinkPanel.setColor(Color.red);
 //        Panel.globalLinkPanel.setValue(source.packstr[0][0]);
       });
-      Title title = (Title)multyTask.remove(0);
+      Title title = (Title)multiTask.remove(0);
       String user = title.user; 
-      QuickObjectArray reply = new QuickObjectArray();
-      List<Externalizable> result;
-      for(Object task : multyTask){
+//      QuickObjectArray reply = new QuickObjectArray();
+      List<Externalizable> result = new ArrayList<>();
+      for(Object task : multiTask){
         CommandQuery query = (CommandQuery)task;
         String class_str = query.form; String method_str = query.method;
         Class clazz = Class.forName(PROJECT_PATH + class_str);
@@ -95,9 +93,12 @@ public class ClientsThread extends Thread {
 //        reply.addAll(result.stream().map(t  -> {
 //          return (Externalizable)t;
 //        }).collect(Collectors.toList()));
-        reply.addAll(result);
+//        reply.addAll(result);
       }
-      reply.writeExternal(oos);
+//      reply.writeExternal(oos);
+      for(Externalizable externalizable : result){
+        externalizable.writeExternal(oos);
+      }
       oos.flush();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.gray));
     }
@@ -107,7 +108,7 @@ public class ClientsThread extends Thread {
       ex.printStackTrace();
     }
   }
-  private List<Externalizable> getResult(Class clazz, String method_str, 
+  private List<Externalizable> getResult(Class<?> clazz, String method_str,
   Object instance, CommandQuery query) throws NoSuchMethodException, 
   IllegalAccessException, IllegalArgumentException, InvocationTargetException{
     Method method =  clazz.getMethod(method_str, WrapAgent.class);
