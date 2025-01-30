@@ -30,16 +30,20 @@ public class MainRequest{
     .collect(Collectors.toList());
     return user;
   }
+  public static List<SchedulePeriodUser> saveDirectUserVacation(List<SchedulePeriodUser> userPack){
+    saveResource(PATH, FILE_NAME, userPack);
+    return new ArrayList<>();
+  }
   public static synchronized List<SchedulePeriodUser> saveUsersVacation(
   List<SchedulePeriodUser> userPack){
     Object resource = makeResource(PATH, FILE_NAME);
     List<SchedulePeriodUser> users = resource == null? 
     new ArrayList<>() : (List<SchedulePeriodUser>)resource;
-    Set<Integer> confirmed = userPack.stream()
+    Set<Integer> existed = userPack.stream()
     .map(SchedulePeriodUser::getEmployeeId)
     .collect(Collectors.toSet());
     List<SchedulePeriodUser> clearUser = users.stream()
-    .filter(us -> ! confirmed.contains(us.getEmployeeId()))
+    .filter(us -> ! existed.contains(us.getEmployeeId()))
     .collect(Collectors.toList());
     clearUser.addAll(userPack);
     saveResource(PATH, FILE_NAME, clearUser);
