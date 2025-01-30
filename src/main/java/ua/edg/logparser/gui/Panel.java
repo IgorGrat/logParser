@@ -6,27 +6,23 @@
  import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
- import javax.swing.BorderFactory;
- import javax.swing.BoxLayout;
- import javax.swing.JDialog;
- import javax.swing.JLabel;
- 
- 
+ import javax.swing.*;
+
+
  public class Panel{
    
    public static String PATH;
    public static Panel globalLinkPanel;
-   private final JDialog owner;
    private final JLabel label;
    
    public Panel(int port, String path) {
-     this.owner = new JDialog();
-     this.owner.setDefaultCloseOperation(2);
-     this.owner.setTitle("Парсер логов");
+     JDialog owner = new JDialog();
+     owner.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+     owner.setTitle("Logs Parser");
      PATH = path;
      globalLinkPanel = this;
-     Container container = this.owner.getContentPane();
-     container.setLayout(new BoxLayout(container, 1));
+     Container container = owner.getContentPane();
+     container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
      Dimension dimension = new Dimension(400, 30);
      this.label = new JLabel();
      this.label.setMinimumSize(dimension);
@@ -35,23 +31,23 @@ import java.awt.event.WindowEvent;
      this.label.setBorder(BorderFactory.createEtchedBorder());
      this.label.setOpaque(true);
      this.label.setBackground(Color.gray);
-     this.label.setFont(new Font("Ariel", 2, 14));
-     this.label.setHorizontalAlignment(0);
+     this.label.setFont(new Font("Ariel", Font.ITALIC, 14));
+     this.label.setHorizontalAlignment(SwingConstants.CENTER);
      
      container.add(this.label);
      JLabel portLabel = new JLabel();
      portLabel.setPreferredSize(dimension);
      portLabel.setMinimumSize(dimension);
      portLabel.setMaximumSize(dimension);
-     portLabel.setText("Порт по умолчанию : " + String.valueOf(port));
-     portLabel.setFont(new Font("Ariel", 3, 16));
-     portLabel.setHorizontalAlignment(0);
+     portLabel.setText("port by default : " + port);
+     portLabel.setFont(new Font("Ariel", Font.BOLD | Font.ITALIC, 16));
+     portLabel.setHorizontalAlignment(SwingConstants.CENTER);
      portLabel.setBackground(Color.WHITE);
      
      container.add(portLabel);
-     this.owner.pack();
-     this.owner.setVisible(true);
-     this.owner.addWindowListener(new WindowAdapter() {
+     owner.pack();
+     owner.setVisible(true);
+     owner.addWindowListener(new WindowAdapter() {
        @Override
        public void windowClosing(WindowEvent e){
          System.exit(0);
@@ -59,7 +55,7 @@ import java.awt.event.WindowEvent;
      });
    }
    public void setValue(String text) {
-     this.label.setText("Последний запрос : " + text);
+     this.label.setText("last request : " + text);
    }
    public void setColor(Color color) {
      this.label.setBackground(color);

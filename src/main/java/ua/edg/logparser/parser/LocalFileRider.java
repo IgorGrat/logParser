@@ -1,8 +1,10 @@
 package ua.edg.logparser.parser;
 
+import org.apache.logging.log4j.LogManager;
+
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -12,10 +14,10 @@ import java.util.regex.Pattern;
 
 public class LocalFileRider{
   
-  public static void main(String[] args){
-    System.out.println("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"
-    .equals("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"));
-  }
+//  public static void main(String[] args){
+//    System.out.println("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"
+//    .equals("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"));
+//  }
 
 //  public static final String CLIENT_REG = "^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
   public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
@@ -27,16 +29,15 @@ public class LocalFileRider{
   private List<String[]> content;
   protected boolean doAction = true;
 
-  public List getContents(File file){
+  public List<String[]> getContents(File file){
     try(BufferedReader bufferedReader = new BufferedReader(
-    new InputStreamReader(Files.newInputStream(file.toPath(), 
-    new OpenOption[]{StandardOpenOption.READ}), "utf-8"), 1000000)){
+    new InputStreamReader(Files.newInputStream(file.toPath(),
+      StandardOpenOption.READ), StandardCharsets.UTF_8), 1000000)){
       String string;
       while((string = bufferedReader.readLine()) != null && doAction){
-//        if(string.matches("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?")){
         if(string.matches(client_regex)){
           Matcher matcher = CLIENT_PATTERN.matcher(string);
-          if(matcher.find() == false){
+          if(! matcher.find()){
             throw new IllegalArgumentException("param string has wrong format");
           }
           TableRowDTO tableRowDTO = new TableRowDTO();
@@ -53,10 +54,10 @@ public class LocalFileRider{
       }
     }
     catch(FileNotFoundException ex){
-      ex.printStackTrace();
+      LogManager.getLogger().error("File not found", ex);
     }
     catch(IOException ex){
-      ex.printStackTrace();
+      LogManager.getLogger().error("IOException", ex);
     }
     return content;
   }

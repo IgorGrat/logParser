@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import transimpex.WrapAgent;
-import ua.edg.logparser.parser.WorkTimePersonalCounter.UserTimeCount;
 
 
 public class MainEngine{
@@ -31,7 +30,7 @@ public class MainEngine{
         total[length] = odu.busy_second;
         hours.add(total);
       }
-    }.scanePeriod(source);
+    }.scannerPeriod(source);
     WrapAgent agent = new WrapAgent();
     int users_size = users.size();
     agent.packstr = new String[][]{users.toArray(new String[users_size])};
@@ -45,10 +44,10 @@ public class MainEngine{
       @Override
       protected void getUsersData(String user, UserTimeCount utc){
         users.add(user);
-        List<OneDayUnit> odus = utc.daysPeriod;
-        data.add(odus.stream().mapToLong(e -> e.busy_second).toArray());
+        List<OneDayUnit> dayUnits = utc.daysPeriod;
+        data.add(dayUnits.stream().mapToLong(e -> e.busy_second).toArray());
       }
-    }.scanePeriod(source);
+    }.scannerPeriod(source);
     WrapAgent agent = new WrapAgent();
     int users_size = users.size();
     agent.packstr = new String[][]{users.toArray(new String[users_size])};

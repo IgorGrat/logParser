@@ -89,9 +89,9 @@ public class WorkTimePersonalCounter{
       long[] itemHours = dayUnit.workingPeriodHours;
       while(minute_withOut_work > 0 && hour - shiftTime < hours){
         int rest_of_hour = minInHour - first_min_period;
-        int able_quont_min_in_hour = (int) Math.min(
+        int able_quantity_min_in_hour = (int)Math.min(
         rest_of_hour, minute_withOut_work) + first_min_period;
-        for(int begin = first_min_period; begin < able_quont_min_in_hour; begin ++){
+        for(int begin = first_min_period; begin < able_quantity_min_in_hour; begin ++){
           itemHours[hour - shiftTime] = itemHours[hour - shiftTime] + (1L << 59 - begin);
           minute_withOut_work --;
         }
@@ -107,7 +107,7 @@ public class WorkTimePersonalCounter{
       }
     }
   }
-  public void scanePeriod(WrapAgent source){
+  public void scannerPeriod(WrapAgent source){
     String[] logins = source.packstr[0];
     LocalTime beginLocalTime = LocalTime.of(8, 0);
     int period_hours = 11;
@@ -137,16 +137,14 @@ public class WorkTimePersonalCounter{
         if(dTO.clazz.equals("General.") && dTO.method.equals("getUserAttAction")){
           return;
         }
-        if(utc.addActivity(dTO.dateTime) == false){
+        if(! utc.addActivity(dTO.dateTime)){
           doAction = false;
         }
       }
     };
     int length = prefix.length();
-    File[] files = folder.listFiles((dir, name)  -> { 
-      return name.substring(length).matches("[0-9]*"); 
-    });
-    /**************************************************************************/
+    File[] files = folder.listFiles((dir, name)  -> name.substring(length).matches("[0-9]*"));
+    /*---------------------------------------------------------------------------------------------------------------*/
     Arrays.sort(files, (o1, o2) -> (Integer.parseInt(o1.getName().substring(length)) > 
     Integer.parseInt(o2.getName().substring(length))) ? -1 : 1);
 
@@ -156,7 +154,7 @@ public class WorkTimePersonalCounter{
       if(last_mod_long != 0){
         LocalDateTime lastModified = LocalDateTime.ofInstant(
         Instant.ofEpochMilli(last_mod_long), ZoneId.systemDefault());
-        if(lastModified.isBefore(from_this_date) == false){
+        if(! lastModified.isBefore(from_this_date)){
           int previous_file = i - 1;
           LocalDateTime create_file = previous_file >= 0 ?
           LocalDateTime.ofInstant(Instant.ofEpochMilli(
@@ -173,10 +171,9 @@ public class WorkTimePersonalCounter{
         }
       }
     }
-    scoope.entrySet().forEach((entry) -> {
-      UserTimeCount timeCount = entry.getValue();
+    scoope.forEach((key, timeCount) -> {
       timeCount.closeTimePeriod();
-      getUsersData(entry.getKey(), timeCount);
+      getUsersData(key, timeCount);
     });
   }
   protected void getUsersData(String user, UserTimeCount utc){

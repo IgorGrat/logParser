@@ -1,10 +1,13 @@
 package ua.edg.managerVacation;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
 import transimpex.schaduleVacation.dto.SchedulePeriodUser;
 
 /**
@@ -33,10 +36,10 @@ public class MainRequest{
     List<SchedulePeriodUser> users = resource == null? 
     new ArrayList<>() : (List<SchedulePeriodUser>)resource;
     Set<Integer> confirmed = userPack.stream()
-    .map(uss -> uss.getEmployeeId())
+    .map(SchedulePeriodUser::getEmployeeId)
     .collect(Collectors.toSet());
     List<SchedulePeriodUser> clearUser = users.stream()
-    .filter(us -> confirmed.contains(us.getEmployeeId()) == false)
+    .filter(us -> ! confirmed.contains(us.getEmployeeId()))
     .collect(Collectors.toList());
     clearUser.addAll(userPack);
     saveResource(PATH, FILE_NAME, clearUser);
@@ -54,13 +57,13 @@ public class MainRequest{
   }
   public static Object makeResource(String path, String name){
     Object target = null; File file = new File(path + name); 
-    if(file.exists() == false){return null;}
+    if(! file.exists()){return null;}
     try(ObjectInputStream ois = new ObjectInputStream(
-    new FileInputStream(file))){
+      Files.newInputStream(file.toPath()))){
       target = ois.readObject();
     }
     catch(ClassNotFoundException | IOException e){
-      e.printStackTrace();
+      LogManager.getLogger(MainRequest.class).error(e);
     }
     return target;
   }
@@ -69,14 +72,18 @@ public class MainRequest{
     String source = path + name;
     File backup = new File(source.substring(0, source.length() - 3) + "bac"); 
     try{
-      new File(source).renameTo(backup);
+      boolean isRename = new File(source).renameTo(backup);
       try(ObjectOutputStream oos = 
       new ObjectOutputStream(new FileOutputStream(source))){
         oos.writeObject(object);
       }
-      backup.delete();
+      boolean isDelete = backup.delete();
     }
-    catch(FileNotFoundException e){e.printStackTrace();}
-    catch(IOException e){e.printStackTrace();}
+    catch(FileNotFoundException e){
+      LogManager.getLogger(MainRequest.class).error(e.getMessage(), e);
+    }
+    catch(IOException e){
+      LogManager.getLogger(MainRequest.class).error("IOException", e);
+    }
   }
 }
