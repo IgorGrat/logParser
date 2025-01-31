@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import transimpex.schaduleVacation.dto.SchedulePeriodUser;
-
 /**
  *
  * @author uncle

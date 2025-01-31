@@ -10,7 +10,7 @@ import static ua.edg.managerVacation.MainRequest.getUsersVacation;
 public class UpdaterFormalVacations{
   public static void updateVacation(){
     List<SchedulePeriodUser> scope = MainRequest.getUsersVacation();
-    MainRequest.saveUsersVacation(scope);
+    MainRequest.saveDirectUserVacation(scope);
     /* После этого меняем readObject на boolean из потока */
   }
 }

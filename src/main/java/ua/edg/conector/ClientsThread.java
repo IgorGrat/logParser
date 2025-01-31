@@ -29,14 +29,14 @@ public class ClientsThread extends Thread {
   }
   @Override
   public void run() {
-    try(Socket ss = socket){
-      ObjectInputStream ois = new ObjectInputStream(ss.getInputStream());
-      ObjectOutputStream oos = new ObjectOutputStream(ss.getOutputStream());
+    try(Socket ss = socket;
+    ObjectInputStream ois = new ObjectInputStream(ss.getInputStream());
+    ObjectOutputStream oos = new ObjectOutputStream(ss.getOutputStream())){
       List<?> multiTask = (List<?>)ois.readObject();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.red));
       Title title = (Title)multiTask.remove(0);
       String user = title.user; 
-      List<Externalizable> result = new ArrayList<>();
+      List<Exterclon> result = new ArrayList<>();
       for(Object task : multiTask){
         CommandQuery query = (CommandQuery)task;
         String class_str = query.form; String method_str = query.method;
@@ -54,7 +54,7 @@ public class ClientsThread extends Thread {
             method.setAccessible(true);
             @SuppressWarnings("unchecked")
             List<SchedulePeriodUser> users = (List<SchedulePeriodUser>)query.option;
-            result = (List<Externalizable>)method.invoke(instance, users);
+            result = (List<Exterclon>)method.invoke(instance, users);
             break;
           }
           case "clearUsersVacation" :
@@ -62,23 +62,25 @@ public class ClientsThread extends Thread {
             Method method =  clazz.getMethod(method_str, int.class);
             method.setAccessible(true);
             int userId = (Integer)query.option;
-            result = (List<Externalizable>)method.invoke(instance, userId);
+            result = (List<Exterclon>)method.invoke(instance, userId);
             break;
           }
           case "getUsersVacation" : {
             Method method =  clazz.getMethod(method_str);
             method.setAccessible(true);
-            result = (List<Externalizable>)method.invoke(instance);
+            result = (List<Exterclon>)method.invoke(instance);
             break;
           }
           default :
           result = new ArrayList<>();
         }
       }
-      for(Externalizable externalizable : result){
-        externalizable.writeExternal(oos);
-      }
-      oos.flush();
+      QuickObjectArray<?> list = new QuickObjectArray<>(result);
+      list.writeExternal(oos);
+//      for(Externalizable externalizable : result){
+//        externalizable.writeExternal(oos);
+//      }
+//      oos.flush();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.gray));
     }
     catch (IOException|ClassNotFoundException | IllegalAccessException | 
@@ -87,14 +89,14 @@ public class ClientsThread extends Thread {
       LogManager.getLogger(ClientsThread.class).error(ex);
     }
   }
-  private List<Externalizable> getResult(Class<?> clazz, String method_str,
+  private List<Exterclon> getResult(Class<?> clazz, String method_str,
   Object instance, CommandQuery query) throws NoSuchMethodException, 
   IllegalAccessException, IllegalArgumentException, InvocationTargetException{
     Method method =  clazz.getMethod(method_str, WrapAgent.class);
     method.setAccessible(true);
     WrapAgent params = (WrapAgent)query.option;
-    List<Externalizable> result = new ArrayList<>();
-    result.add((Externalizable)method.invoke(instance, params));
+    List<Exterclon> result = new ArrayList<>();
+    result.add((Exterclon)method.invoke(instance, params));
     return result;
   }
 }
