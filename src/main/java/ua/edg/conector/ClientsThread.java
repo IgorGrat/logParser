@@ -28,14 +28,14 @@ public class ClientsThread extends Thread {
     socket = ss;
   }
   @Override
-  public void run() {
+  public void run(){
     try(Socket ss = socket;
     ObjectInputStream ois = new ObjectInputStream(ss.getInputStream());
     ObjectOutputStream oos = new ObjectOutputStream(ss.getOutputStream())){
       List<?> multiTask = (List<?>)ois.readObject();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.red));
       Title title = (Title)multiTask.remove(0);
-      String user = title.user; 
+      String user = title.user;
       List<Exterclon> result = new ArrayList<>();
       for(Object task : multiTask){
         CommandQuery query = (CommandQuery)task;
