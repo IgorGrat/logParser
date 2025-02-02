@@ -49,6 +49,7 @@ public class ClientsThread extends Thread {
             result = getResult(clazz, method_str, instance, query);
             break;
           }
+          case "saveDirectUserVacation" :
           case "saveUsersVacation" : {
             Method method =  clazz.getMethod(method_str, List.class);
             method.setAccessible(true);
