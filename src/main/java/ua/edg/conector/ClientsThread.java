@@ -1,22 +1,21 @@
  package ua.edg.conector;
  
- import java.awt.Color;
-import java.io.Externalizable;
- import java.io.IOException;
- import java.io.ObjectInputStream;
- import java.io.ObjectOutputStream;
+import java.awt.Color;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
- import java.net.Socket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
- import javax.swing.SwingUtilities;
+import javax.swing.SwingUtilities;
 
- import org.apache.logging.log4j.LogManager;
- import transimpex.*;
- import transimpex.schaduleVacation.dto.SchedulePeriodUser;
- import ua.edg.logparser.gui.Panel;
+import org.apache.logging.log4j.LogManager;
+import transimpex.*;
+import transimpex.schaduleVacation.dto.SchedulePeriodUser;
+import ua.edg.logparser.gui.Panel;
 
 import static ua.edg.conector.Utilities.PROJECT_PATH;
  
@@ -39,7 +38,7 @@ public class ClientsThread extends Thread {
       List<Exterclon> result = new ArrayList<>();
       for(Object task : multiTask){
         CommandQuery query = (CommandQuery)task;
-        String class_str = query.form; String method_str = query.method;
+        String class_str = query.getForm(); String method_str = query.getMethod();
         Class<?> clazz = Class.forName(PROJECT_PATH + class_str);
         Constructor<?> constructor = clazz.getConstructor();
         Object instance = constructor.newInstance();
@@ -54,7 +53,7 @@ public class ClientsThread extends Thread {
             Method method =  clazz.getMethod(method_str, List.class);
             method.setAccessible(true);
             @SuppressWarnings("unchecked")
-            List<SchedulePeriodUser> users = (List<SchedulePeriodUser>)query.option;
+            List<SchedulePeriodUser> users = (List<SchedulePeriodUser>)query.getOption();
             result = (List<Exterclon>)method.invoke(instance, users);
             break;
           }
@@ -62,7 +61,7 @@ public class ClientsThread extends Thread {
           case "getUserVacation" :{
             Method method =  clazz.getMethod(method_str, int.class);
             method.setAccessible(true);
-            int userId = (Integer)query.option;
+            int userId = (Integer)query.getOption();
             result = (List<Exterclon>)method.invoke(instance, userId);
             break;
           }
@@ -78,10 +77,6 @@ public class ClientsThread extends Thread {
       }
       QuickObjectArray<?> list = new QuickObjectArray<>(result);
       list.writeExternal(oos);
-//      for(Externalizable externalizable : result){
-//        externalizable.writeExternal(oos);
-//      }
-//      oos.flush();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.gray));
     }
     catch (IOException|ClassNotFoundException | IllegalAccessException | 
@@ -95,7 +90,7 @@ public class ClientsThread extends Thread {
   IllegalAccessException, IllegalArgumentException, InvocationTargetException{
     Method method =  clazz.getMethod(method_str, WrapAgent.class);
     method.setAccessible(true);
-    WrapAgent params = (WrapAgent)query.option;
+    WrapAgent params = (WrapAgent)query.getOption();
     List<Exterclon> result = new ArrayList<>();
     result.add((Exterclon)method.invoke(instance, params));
     return result;
