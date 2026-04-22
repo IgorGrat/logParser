@@ -7,11 +7,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import transimpex.WrapAgent;
 
 import static ua.edg.logparser.gui.Panel.PATH;
@@ -112,7 +110,8 @@ public class WorkTimePersonalCounter{
     LocalTime beginLocalTime = LocalTime.of(8, 0);
     int period_hours = 11;
     LocalTime endLocalTime = beginLocalTime.plusHours(period_hours);
-    String prefix = "log.txt.";
+    String baseFile = "log.txt";
+    String prefix = baseFile + ".";
     int allowToRestMin = 15;
     long[] dates = source.packlng[0];
     LocalDate first = LocalDate.ofEpochDay(dates[0]);
@@ -120,17 +119,20 @@ public class WorkTimePersonalCounter{
     LocalDateTime from_this_date = LocalDateTime.of(first, beginLocalTime);
     LocalDateTime to_this_date = LocalDateTime.of(second, endLocalTime);
     File folder = new File(PATH);
-    final Map<String, UserTimeCount> scoope = new HashMap<>();
+    File base = new File(folder, baseFile);
+
+    final Map<String, UserTimeCount> scope = new HashMap<>();
     int shift_time = beginLocalTime.getHour();
     for(String login : logins){
-      scoope.put(login, new UserTimeCount(from_this_date, to_this_date, 
+      scope.put(login, new UserTimeCount(from_this_date, to_this_date,
       period_hours, allowToRestMin, shift_time));
     }
+
     LocalFileRider fileReader = new LocalFileRider(){
       @Override
       protected void addItemToScope(TableRowDTO dTO){
         String login = dTO.login;
-        UserTimeCount utc = scoope.get(login);
+        UserTimeCount utc = scope.get(login);
         if(utc == null){
           return;
         }
@@ -142,39 +144,48 @@ public class WorkTimePersonalCounter{
         }
       }
     };
-    int length = prefix.length();
-    File[] files = folder.listFiles((dir, name)  -> name.substring(length).matches("[0-9]*"));
-    /*---------------------------------------------------------------------------------------------------------------*/
-    Arrays.sort(files, (o1, o2) -> (Integer.parseInt(o1.getName().substring(length)) > 
-    Integer.parseInt(o2.getName().substring(length))) ? -1 : 1);
 
-    for(int i = 0; i < files.length; i ++){
-      File file = files[i];
-      long last_mod_long = file.lastModified();
-      if(last_mod_long != 0){
-        LocalDateTime lastModified = LocalDateTime.ofInstant(
-        Instant.ofEpochMilli(last_mod_long), ZoneId.systemDefault());
-        if(! lastModified.isBefore(from_this_date)){
-          int previous_file = i - 1;
-          LocalDateTime create_file = previous_file >= 0 ?
-          LocalDateTime.ofInstant(Instant.ofEpochMilli(
-          files[previous_file].lastModified()), ZoneId.systemDefault()) : from_this_date;
-          if(create_file.isAfter(to_this_date)){
-            break;
-          }
-          if(((create_file.isAfter(from_this_date) || create_file.isEqual(from_this_date)) 
-          && create_file.isBefore(to_this_date)) || 
-          ((lastModified.isAfter(from_this_date) || 
-          lastModified.isEqual(from_this_date)) && lastModified.isBefore(to_this_date))){
-            fileReader.getContents(file);
-          }
-        }
-      }
+    int length = prefix.length();
+    File[] files = folder.listFiles((dir, name) -> name.length() > length && name.substring(length).matches("[0-9]*"));
+    List<File> fileList = new ArrayList<>();
+
+    if(files != null){
+        fileList.addAll(Arrays.stream(files).sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getName()
+                .substring(length)))).collect(Collectors.toList()));
     }
-    scoope.forEach((key, timeCount) -> {
-      timeCount.closeTimePeriod();
-      getUsersData(key, timeCount);
-    });
+      if(base.exists() && base.isFile()){
+          fileList.add(base);
+      }
+    /*---------------------------------------------------------------------------------------------------------------*/
+      if(! fileList.isEmpty()){
+          for(int size = fileList.size(), i = 0; i < size; i++){
+            File file = fileList.get(i);
+            long last_mod_long = file.lastModified();
+            if(last_mod_long != 0){
+              LocalDateTime lastModified = LocalDateTime.ofInstant(
+              Instant.ofEpochMilli(last_mod_long), ZoneId.systemDefault());
+              if(! lastModified.isBefore(from_this_date)){
+                int previous_file = i - 1;
+                LocalDateTime create_file = previous_file >= 0 ?
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(
+                fileList.get(previous_file).lastModified()), ZoneId.systemDefault()) : from_this_date;
+                if(create_file.isAfter(to_this_date)){
+                  break;
+                }
+                if(((create_file.isAfter(from_this_date) || create_file.isEqual(from_this_date))
+                && create_file.isBefore(to_this_date)) ||
+                ((lastModified.isAfter(from_this_date) ||
+                lastModified.isEqual(from_this_date)) && lastModified.isBefore(to_this_date))){
+                  fileReader.getContents(file);
+                }
+              }
+            }
+          }
+          scope.forEach((login, timeCount) -> {
+            timeCount.closeTimePeriod();
+            getUsersData(login, timeCount);
+          });
+      }
   }
   protected void getUsersData(String user, UserTimeCount utc){
   }

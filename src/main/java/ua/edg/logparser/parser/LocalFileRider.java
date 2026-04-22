@@ -13,18 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LocalFileRider{
-  
-//  public static void main(String[] args){
-//    System.out.println("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"
-//    .equals("^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?"));
-//  }
 
-//  public static final String CLIENT_REG = "^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
-  public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
+//  public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}р\\.\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
+  public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
   public static final Pattern CLIENT_PATTERN = Pattern.compile(client_regex);
   
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter
-  .ofPattern("dd.MM.yyyyр. HH:mm:ss");
+  .ofPattern("dd.MM.yyyy HH:mm:ss");
 
   private List<String[]> content;
   protected boolean doAction = true;
