@@ -34,7 +34,7 @@ public class ClientsThread extends Thread {
       List<?> multiTask = (List<?>)ois.readObject();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.red));
       Title title = (Title)multiTask.remove(0);
-      String user = title.user;
+      String user = title.getUser();
       List<Exterclon> result = new ArrayList<>();
       for(Object task : multiTask){
         CommandQuery query = (CommandQuery)task;

@@ -19,15 +19,14 @@ public class MainRequest{
   
   public static synchronized List<SchedulePeriodUser> getUsersVacation(){
     Object resource = makeResource(PATH, FILE_NAME);
-    return resource == null? 
+    return resource == null?
     new ArrayList<>() : (List<SchedulePeriodUser>)resource;
   }
   public static synchronized List<SchedulePeriodUser> getUserVacation(int userId){
     List<SchedulePeriodUser> users = getUsersVacation();
-    List<SchedulePeriodUser> user = users.stream()
+    return users.stream()
     .filter(usr -> usr.getEmployeeId() == userId)
     .collect(Collectors.toList());
-    return user;
   }
   public static List<SchedulePeriodUser> saveDirectUserVacation(List<SchedulePeriodUser> userPack){
     saveResource(PATH, FILE_NAME, userPack);
@@ -36,7 +35,8 @@ public class MainRequest{
   public static synchronized List<SchedulePeriodUser> saveUsersVacation(
   List<SchedulePeriodUser> userPack){
     Object resource = makeResource(PATH, FILE_NAME);
-    List<SchedulePeriodUser> users = resource == null? 
+    @SuppressWarnings("unchecked")
+    List<SchedulePeriodUser> users = resource == null?
     new ArrayList<>() : (List<SchedulePeriodUser>)resource;
     Set<Integer> existed = userPack.stream()
     .map(SchedulePeriodUser::getEmployeeId)
@@ -45,18 +45,17 @@ public class MainRequest{
     .filter(us -> ! existed.contains(us.getEmployeeId()))
     .collect(Collectors.toList());
     clearUser.addAll(userPack);
-    saveResource(PATH, FILE_NAME, clearUser);
-    return new ArrayList<>();
+    return saveDirectUserVacation(clearUser);
   }
   public static synchronized List<SchedulePeriodUser> clearUsersVacation(int user){
     Object resource = makeResource(PATH, FILE_NAME);
-    List<SchedulePeriodUser> users = resource == null? 
+    @SuppressWarnings("unchecked")
+    List<SchedulePeriodUser> users = resource == null?
     new ArrayList<>() : (List<SchedulePeriodUser>)resource;
     List<SchedulePeriodUser> clearUser = users.stream()
     .filter(us -> user != us.getEmployeeId())
     .collect(Collectors.toList());
-    saveResource(PATH, FILE_NAME, clearUser);
-    return new ArrayList<>();
+    return saveDirectUserVacation(clearUser);
   }
   public static Object makeResource(String path, String name){
     Object target = null; File file = new File(path + name); 
