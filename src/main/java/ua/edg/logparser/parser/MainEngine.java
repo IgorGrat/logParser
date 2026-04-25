@@ -11,8 +11,8 @@ import transimpex.WrapAgent;
 public class MainEngine{
 
   public WrapAgent getWorkTime(WrapAgent source){
-    LocalDate first = LocalDate.ofEpochDay(source.packlng[0][0]);
-    LocalDate second = LocalDate.ofEpochDay(source.packlng[0][1]);
+    LocalDate first = LocalDate.ofEpochDay(source.getLongPack()[0][0]);
+    LocalDate second = LocalDate.ofEpochDay(source.getLongPack()[0][1]);
     return ChronoUnit.DAYS.between(first, second) > 0? 
     getWorkTimePersonalForPeriod(source) : getWorkTimeOneDay(source);
   }
@@ -33,8 +33,8 @@ public class MainEngine{
     }.scannerPeriod(source);
     WrapAgent agent = new WrapAgent();
     int users_size = users.size();
-    agent.packstr = new String[][]{users.toArray(new String[users_size])};
-    agent.packlng = hours.toArray(new long[users_size][]);
+    agent.setStringPack(new String[][]{users.toArray(new String[users_size])});
+    agent.setLongPack(hours.toArray(new long[users_size][]));
     return agent;
   }
   public WrapAgent getWorkTimePersonalForPeriod(WrapAgent source){
@@ -50,8 +50,8 @@ public class MainEngine{
     }.scannerPeriod(source);
     WrapAgent agent = new WrapAgent();
     int users_size = users.size();
-    agent.packstr = new String[][]{users.toArray(new String[users_size])};
-    agent.packlng = data.toArray(new long[users_size][]);
+    agent.setStringPack(new String[][]{users.toArray(new String[users_size])});
+    agent.setLongPack(data.toArray(new long[users_size][]));
     return agent;
   }
 }

@@ -20,21 +20,21 @@ import static ua.edg.logparser.gui.Panel.PATH;
  */
 public class WorkTimePersonalCounter{
   
-  public class OneDayUnit{
+  public static class OneDayUnit{
     public long busy_second;
     public final long[] workingPeriodHours;
-    private final LocalDateTime startMomemtOfDay;
+    private final LocalDateTime startMomentOfDay;
     private final LocalDateTime endMomentDay;
     private LocalDateTime lastActivity;
     
     public OneDayUnit(int workHours, LocalDateTime day){
       this.workingPeriodHours = new long[workHours];
-      this.startMomemtOfDay = day; 
+      this.startMomentOfDay = day;
       this.lastActivity = day;
       this.endMomentDay = day.plusHours(workHours);
     }
   }
-  public class UserTimeCount{
+  public static class UserTimeCount{
     
     public final List<OneDayUnit> daysPeriod;
     private final LocalDateTime startPeriod;
@@ -66,7 +66,7 @@ public class WorkTimePersonalCounter{
       }
       int diffDay = (int)ChronoUnit.DAYS.between(startPeriod, currentActivity);
       OneDayUnit dayUnit = daysPeriod.get(diffDay);
-      if(currentActivity.isBefore(dayUnit.startMomemtOfDay) || 
+      if(currentActivity.isBefore(dayUnit.startMomentOfDay) ||
         currentActivity.isAfter(dayUnit.endMomentDay)){
         return true;
       }
@@ -106,14 +106,14 @@ public class WorkTimePersonalCounter{
     }
   }
   public void scannerPeriod(WrapAgent source){
-    String[] logins = source.packstr[0];
+    String[] logins = source.getStringPack()[0];
     LocalTime beginLocalTime = LocalTime.of(8, 0);
     int period_hours = 11;
     LocalTime endLocalTime = beginLocalTime.plusHours(period_hours);
     String baseFile = "log.txt";
     String prefix = baseFile + ".";
     int allowToRestMin = 15;
-    long[] dates = source.packlng[0];
+    long[] dates = source.getLongPack()[0];
     LocalDate first = LocalDate.ofEpochDay(dates[0]);
     LocalDate second = LocalDate.ofEpochDay(dates[1]);
     LocalDateTime from_this_date = LocalDateTime.of(first, beginLocalTime);
@@ -125,7 +125,7 @@ public class WorkTimePersonalCounter{
     int shift_time = beginLocalTime.getHour();
     for(String login : logins){
       scope.put(login, new UserTimeCount(from_this_date, to_this_date,
-      period_hours, allowToRestMin, shift_time));
+        period_hours, allowToRestMin, shift_time));
     }
 
     LocalFileRider fileReader = new LocalFileRider(){
@@ -150,42 +150,42 @@ public class WorkTimePersonalCounter{
     List<File> fileList = new ArrayList<>();
 
     if(files != null){
-        fileList.addAll(Arrays.stream(files).sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getName()
-                .substring(length)))).collect(Collectors.toList()));
+      fileList.addAll(Arrays.stream(files).sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getName()
+      .substring(length)))).collect(Collectors.toList()));
     }
-      if(base.exists() && base.isFile()){
-          fileList.add(base);
-      }
+    if(base.exists() && base.isFile()){
+        fileList.add(base);
+    }
     /*---------------------------------------------------------------------------------------------------------------*/
-      if(! fileList.isEmpty()){
-          for(int size = fileList.size(), i = 0; i < size; i++){
-            File file = fileList.get(i);
-            long last_mod_long = file.lastModified();
-            if(last_mod_long != 0){
-              LocalDateTime lastModified = LocalDateTime.ofInstant(
-              Instant.ofEpochMilli(last_mod_long), ZoneId.systemDefault());
-              if(! lastModified.isBefore(from_this_date)){
-                int previous_file = i - 1;
-                LocalDateTime create_file = previous_file >= 0 ?
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(
-                fileList.get(previous_file).lastModified()), ZoneId.systemDefault()) : from_this_date;
-                if(create_file.isAfter(to_this_date)){
-                  break;
-                }
-                if(((create_file.isAfter(from_this_date) || create_file.isEqual(from_this_date))
-                && create_file.isBefore(to_this_date)) ||
-                ((lastModified.isAfter(from_this_date) ||
-                lastModified.isEqual(from_this_date)) && lastModified.isBefore(to_this_date))){
-                  fileReader.getContents(file);
-                }
-              }
+    if(!fileList.isEmpty()){
+      for(int size = fileList.size(), i = 0; i < size; i++){
+        File file = fileList.get(i);
+        long last_mod_long = file.lastModified();
+        if(last_mod_long != 0){
+          LocalDateTime lastModified = LocalDateTime.ofInstant(
+          Instant.ofEpochMilli(last_mod_long), ZoneId.systemDefault());
+          if(! lastModified.isBefore(from_this_date)){
+            int previous_file = i - 1;
+            LocalDateTime create_file = previous_file >= 0 ?
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(
+            fileList.get(previous_file).lastModified()), ZoneId.systemDefault()) : from_this_date;
+            if(create_file.isAfter(to_this_date)){
+              break;
+            }
+            if(((create_file.isAfter(from_this_date) || create_file.isEqual(from_this_date))
+            && create_file.isBefore(to_this_date)) ||
+            ((lastModified.isAfter(from_this_date) ||
+            lastModified.isEqual(from_this_date)) && lastModified.isBefore(to_this_date))){
+              fileReader.getContents(file);
             }
           }
-          scope.forEach((login, timeCount) -> {
-            timeCount.closeTimePeriod();
-            getUsersData(login, timeCount);
-          });
+        }
       }
+      scope.forEach((login, timeCount) -> {
+        timeCount.closeTimePeriod();
+        getUsersData(login, timeCount);
+      });
+    }
   }
   protected void getUsersData(String user, UserTimeCount utc){
   }

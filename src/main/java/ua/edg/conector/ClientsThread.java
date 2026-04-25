@@ -54,7 +54,9 @@ public class ClientsThread extends Thread {
             method.setAccessible(true);
             @SuppressWarnings("unchecked")
             List<SchedulePeriodUser> users = (List<SchedulePeriodUser>)query.getOption();
-            result = (List<Exterclon>)method.invoke(instance, users);
+            @SuppressWarnings("unchecked")
+            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance, users);
+            result = invoke;
             break;
           }
           case "clearUsersVacation" :
@@ -62,13 +64,17 @@ public class ClientsThread extends Thread {
             Method method =  clazz.getMethod(method_str, int.class);
             method.setAccessible(true);
             int userId = (Integer)query.getOption();
-            result = (List<Exterclon>)method.invoke(instance, userId);
+            @SuppressWarnings("unchecked")
+            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance, userId);
+            result = invoke;
             break;
           }
           case "getUsersVacation" : {
             Method method =  clazz.getMethod(method_str);
             method.setAccessible(true);
-            result = (List<Exterclon>)method.invoke(instance);
+            @SuppressWarnings("unchecked")
+            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance);
+            result = invoke;
             break;
           }
           default :
