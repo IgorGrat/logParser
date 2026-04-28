@@ -1,15 +1,22 @@
 package ua.edg.logparser.parser;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 public class TableRowDTO {
-  public LocalDateTime dateTime;
-  public String login;
-  public String host;
-  public int session;
-  public String clazz;
-  public String method;
-  public String param;
+  private LocalDateTime dateTime;
+  private String login;
+  private String host;
+  private int session;
+  private String clazz;
+  private String method;
+  private String param;
+  private String serverResponse;
+
 }
 
 

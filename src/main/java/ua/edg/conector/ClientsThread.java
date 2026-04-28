@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingUtilities;
@@ -15,6 +16,7 @@ import javax.swing.SwingUtilities;
 import org.apache.logging.log4j.LogManager;
 import transimpex.*;
 import transimpex.schaduleVacation.dto.SchedulePeriodUser;
+import transimpex.serviceTools.ServiceToolsTimeDate;
 import ua.edg.logparser.gui.Panel;
 
 import static ua.edg.conector.Utilities.PROJECT_PATH;
@@ -48,6 +50,21 @@ public class ClientsThread extends Thread {
             result = getResult(clazz, method_str, instance, query);
             break;
           }
+
+          case "getTableRows" : {
+            Method method =  clazz.getMethod(method_str, String.class, LocalDateTime.class, LocalDateTime.class);
+            method.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<String> params = (List<String>)(query.getOption());
+            String login = params.get(0);
+            LocalDateTime first = ServiceToolsTimeDate.getLocalDateTime(params.get(1));
+            LocalDateTime second = ServiceToolsTimeDate.getLocalDateTime(params.get(2));
+            @SuppressWarnings("unchecked")
+            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance, login, first, second);
+            result = invoke;
+            break;
+          }
+
           case "saveDirectUserVacation" :
           case "saveUsersVacation" : {
             Method method =  clazz.getMethod(method_str, List.class);
