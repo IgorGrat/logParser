@@ -51,16 +51,17 @@ public class ClientsThread extends Thread {
             break;
           }
 
-          case "getTableRows" : {
-            Method method =  clazz.getMethod(method_str, String.class, LocalDateTime.class, LocalDateTime.class);
+          case "getLogTableRows" : {
+            Method method =  clazz.getMethod(method_str, String.class, String.class, LocalDateTime.class, LocalDateTime.class);
             method.setAccessible(true);
             @SuppressWarnings("unchecked")
             List<String> params = (List<String>)(query.getOption());
             String login = params.get(0);
-            LocalDateTime first = ServiceToolsTimeDate.getLocalDateTime(params.get(1));
-            LocalDateTime second = ServiceToolsTimeDate.getLocalDateTime(params.get(2));
+            String pattern = params.get(1);
+            LocalDateTime first = ServiceToolsTimeDate.getLocalDateTime(params.get(2));
+            LocalDateTime second = ServiceToolsTimeDate.getLocalDateTime(params.get(3));
             @SuppressWarnings("unchecked")
-            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance, login, first, second);
+            List<Exterclon> invoke = (List<Exterclon>) method.invoke(instance, login, pattern, first, second);
             result = invoke;
             break;
           }

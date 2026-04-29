@@ -128,7 +128,7 @@ public class WorkTimePersonalCounter{
 //  LocalFileRider fileReader = new LocalFileRider(from_this_date, to_this_date){
     new LocalFileRider(from_this_date, to_this_date){
       @Override
-      protected void addItemToScope(TableRowDTO dTO){
+      protected void addItemToScope(transimpex.logParser.TableRowDTO dTO){
         String login = dTO.getLogin();
         UserTimeCount utc = scope.get(login);
         if(utc == null){
@@ -142,7 +142,7 @@ public class WorkTimePersonalCounter{
 //          doAction = false;
 //        }
       }
-    };
+    }.doAction();
 
 //    int length = prefix.length();
 //    File[] files = folder.listFiles((dir, name) -> name.length() > length && name.substring(length).matches("[0-9]*"));

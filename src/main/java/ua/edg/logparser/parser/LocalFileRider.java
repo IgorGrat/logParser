@@ -91,7 +91,7 @@ public abstract class LocalFileRider{
           if(!matcher.find()){
             throw new IllegalArgumentException("param string has wrong format");
           }
-          TableRowDTO tableRowDTO = new TableRowDTO();
+          transimpex.logParser.TableRowDTO tableRowDTO = new transimpex.logParser.TableRowDTO();
           tableRowDTO.setDateTime(LocalDateTime.parse(matcher.group(1), FORMATTER));
           tableRowDTO.setLogin(matcher.group(2));
           tableRowDTO.setHost(matcher.group(3));
@@ -117,5 +117,5 @@ public abstract class LocalFileRider{
       LogManager.getLogger().error("IOException", ex);
     }
   }
-  protected abstract void addItemToScope(TableRowDTO dTO);
+  protected abstract void addItemToScope(transimpex.logParser.TableRowDTO dTO);
 }
