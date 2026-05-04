@@ -33,13 +33,15 @@ public class ClientsThread extends Thread {
     try(Socket ss = socket;
     ObjectInputStream ois = new ObjectInputStream(ss.getInputStream());
     ObjectOutputStream oos = new ObjectOutputStream(ss.getOutputStream())){
-      List<?> multiTask = (List<?>)ois.readObject();
+//    List<?> multiTask = (List<?>)ois.readObject();
+      ServerRequest multiTask = (ServerRequest)ois.readObject();
       SwingUtilities.invokeLater(() -> Panel.globalLinkPanel.setColor(Color.red));
-      Title title = (Title)multiTask.remove(0);
+//      Title title = (Title)multiTask.remove(0);
+      Title title = multiTask.getTitle();
       String user = title.getUser();
       List<Exterclon> result = new ArrayList<>();
-      for(Object task : multiTask){
-        CommandQuery query = (CommandQuery)task;
+      for(CommandQuery query : multiTask.getCommandQueries()){
+//      CommandQuery query = (CommandQuery)task;
         String class_str = query.getForm(); String method_str = query.getMethod();
         Class<?> clazz = Class.forName(PROJECT_PATH + class_str);
         Constructor<?> constructor = clazz.getConstructor();
