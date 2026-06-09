@@ -23,13 +23,13 @@ import static ua.edg.logparser.gui.Panel.PATH;
 public abstract class LocalFileRider{
 
   public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
+  public static final String server_regex = "";
   public static final Pattern CLIENT_PATTERN = Pattern.compile(client_regex);
   public static final String baseFile = "log.txt";
   
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter
   .ofPattern("dd.MM.yyyy HH:mm:ss");
 
-//  protected boolean doAction = true;
   private final LocalDateTime from_this_date;
   private final LocalDateTime to_this_date;
 
@@ -48,7 +48,7 @@ public abstract class LocalFileRider{
 
     if(files != null){
       fileList.addAll(Arrays.stream(files).sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getName()
-      .substring(length)))).collect(Collectors.toList()));
+      .substring(length)))).toList());
     }
     if(base.exists() && base.isFile()){
       fileList.add(base);
@@ -84,7 +84,6 @@ public abstract class LocalFileRider{
     new InputStreamReader(Files.newInputStream(file.toPath(),
       StandardOpenOption.READ), StandardCharsets.UTF_8), 1000000)){
       String string;
-//      while((string = bufferedReader.readLine()) != null && doAction){
       while((string = bufferedReader.readLine()) != null){
         if(string.matches(client_regex)){
           Matcher matcher = CLIENT_PATTERN.matcher(string);
