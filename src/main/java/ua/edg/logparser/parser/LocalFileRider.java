@@ -1,6 +1,7 @@
 package ua.edg.logparser.parser;
 
 import org.apache.logging.log4j.LogManager;
+import transimpex.logParser.TableRowDTO;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -10,23 +11,21 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static ua.edg.logparser.gui.Panel.PATH;
 
 public abstract class LocalFileRider{
 
   public static final String client_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s(.*)\\(host\\s(\\d+\\.\\d+\\.\\d+\\.\\d+);\\ssession\\s(.*)\\)\\s>\\s(\\w+\\.)*(\\w*)\\s>\\s([^\n]*)\n?";
-  public static final String server_regex = "";
+  public static final String server_regex = "^(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2}:\\d{2}\\sServer\\(process=\\d+\\smainBuilder=\\d+\\sdeliberateBuilder=\\d+\\suserMarket=(\\d+)\\)>\\s([^\n]*)\n?)";
   public static final Pattern CLIENT_PATTERN = Pattern.compile(client_regex);
+  public static final Pattern SERVER_PATTERN = Pattern.compile(server_regex);
+
   public static final String baseFile = "log.txt";
-  
+
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter
   .ofPattern("dd.MM.yyyy HH:mm:ss");
 
@@ -84,6 +83,7 @@ public abstract class LocalFileRider{
     new InputStreamReader(Files.newInputStream(file.toPath(),
       StandardOpenOption.READ), StandardCharsets.UTF_8), 1000000)){
       String string;
+      Map<Integer, transimpex.logParser.TableRowDTO> tableRowDTOs = new HashMap<>();
       while((string = bufferedReader.readLine()) != null){
         if(string.matches(client_regex)){
           Matcher matcher = CLIENT_PATTERN.matcher(string);
@@ -99,13 +99,24 @@ public abstract class LocalFileRider{
           tableRowDTO.setClazz(matcher.group(5));
           tableRowDTO.setMethod(matcher.group(6));
           tableRowDTO.setParam(matcher.group(7));
+
           if(tableRowDTO.getDateTime().isBefore(from_this_date)){
             continue;
           }
           if(tableRowDTO.getDateTime().isAfter(to_this_date)){
             break;
           }
-          addItemToScope(tableRowDTO);
+          tableRowDTOs.put(tableRowDTO.getSession(), tableRowDTO);
+        } else if (string.matches(server_regex)) {
+          Matcher matcher = SERVER_PATTERN.matcher(string);
+          if(!matcher.find()){
+            throw new IllegalArgumentException("param string has wrong format");
+          }
+
+          int session = Integer.parseInt(matcher.group(2));
+          TableRowDTO one = tableRowDTOs.remove(session);
+          if(one != null) one.setServerResponse(string);
+          addItemToScope(one);
         }
       }
     }

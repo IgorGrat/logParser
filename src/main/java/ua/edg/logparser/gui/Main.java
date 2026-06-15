@@ -2,7 +2,6 @@
  
  import javax.swing.SwingUtilities;
  import ua.edg.conector.ServerTranslator;
- import ua.edg.conector.UpdaterFormalVacations;
 
  public class Main {
    static void main(String[] args){
