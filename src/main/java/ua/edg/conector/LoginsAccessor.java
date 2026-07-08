@@ -1,17 +1,27 @@
 package ua.edg.conector;
 
+import com.google.gson.Gson;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class LoginsAccessor {
 
-    private static String requestLogins() {
+    private static Gson gson = new Gson();
+
+    @Getter
+    @Setter
+    private class LoginDTO {
+        private List<String> logins;
+    }
+
+    public static List<String> parseLogins() {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://192.168.1.10:7590/api/getLoginsJson"))
@@ -20,18 +30,10 @@ public class LoginsAccessor {
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.body();
+            return gson.fromJson(response.body(), LoginDTO.class).getLogins();
         } catch (Exception e) {
             System.err.println("Error fetching logins: " + e.getMessage());
             return null;
         }
-    }
-
-    public static List<String> parseLogins() {
-        String[] body = Objects.requireNonNull(requestLogins())
-                .replaceAll("[\\[\\]]", "")
-                .replace("\"", "")
-                .split(",");
-        return Arrays.asList(body);
     }
 }

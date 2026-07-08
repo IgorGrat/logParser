@@ -17,7 +17,7 @@ public class DateTimePicker extends DatePicker {
     private final ObjectProperty<LocalDateTime> dateTimeValue = new SimpleObjectProperty<>(LocalDateTime.now());
 
     public DateTimePicker() {
-        this(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        this(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
     public DateTimePicker(DateTimeFormatter formatter) {

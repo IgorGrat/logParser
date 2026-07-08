@@ -18,214 +18,284 @@ import ua.edg.conector.LoginsAccessor;
 import ua.edg.logparser.parser.LocalFileRider;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 public class JavaFX extends Application{
-  private final TableColumn<TableRowDTO, String> tableColumnTime = new TableColumn<>("Час");
-  private final TableColumn<TableRowDTO, String> tableColumnLogin = new TableColumn<>("Логін");
-  private final TableColumn<TableRowDTO, String> tableColumnHost = new TableColumn<>("Хост");
-  //    private TableColumn<TableRowDTO, Integer> tableColumnSession = new TableColumn<>("Session");
-  private final TableColumn<TableRowDTO, String> tableColumnClass = new TableColumn<>("Клас");
-  private final TableColumn<TableRowDTO, String> tableColumnMethod = new TableColumn<>("Метод");
-  private final TableColumn<TableRowDTO, String> tableColumnParam = new TableColumn<>("Параметри");
-  private final TableColumn<TableRowDTO, String> tableColumnResponse = new TableColumn<>("Відповідь");
-  private final TableView<TableRowDTO> tableShow = new TableView<>();
-  private final TextField hint = new TextField("Ctrl + Click для вибору декількох клітинок, Ctrl + C для копіювання");
 
-  private final ComboBox<String> searchByLogin = new ComboBox<>();
-  private final Button search = new Button("Шукати");
-  private final TextField method = new TextField();
+	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-  private final TextField searchTimeFrom = new TextField("00:00");
-  private final TextField searchTimeTo = new TextField("23:59");
+	private final TableColumn<TableRowDTO, LocalDateTime> tableColumnTime = new TableColumn<>("Час");
+	private final TableColumn<TableRowDTO, String> tableColumnLogin = new TableColumn<>("Логін");
+	private final TableColumn<TableRowDTO, String> tableColumnHost = new TableColumn<>("Хост");
+	private final TableColumn<TableRowDTO, String> tableColumnClass = new TableColumn<>("Клас");
+	private final TableColumn<TableRowDTO, String> tableColumnMethod = new TableColumn<>("Метод");
+	private final TableColumn<TableRowDTO, String> tableColumnParam = new TableColumn<>("Параметри");
+	private final TableColumn<TableRowDTO, String> tableColumnResponse = new TableColumn<>("Відповідь");
+	private final TableView<TableRowDTO> tableShow = new TableView<>();
+	private final TextField hint = new TextField("Ctrl + Click для вибору декількох клітинок, Ctrl + C для копіювання");
 
-  private final DateTimePicker dateTimePickerSince = new DateTimePicker();
-  private final DateTimePicker DateTimePickerUntil = new DateTimePicker();
+	private final ComboBox<String> loginComboBox = new ComboBox<>();
+	private final ComboBox<String> methodComboBox = new ComboBox<>();
+	private final Button searchButton = new Button("Шукати");
+	private final TextField maskField = new TextField();
 
-  private LocalDateTime since = LocalDateTime.now().minusDays(1);
-  private LocalDateTime until = LocalDateTime.now();
+	private final TextField searchTimeFrom = new TextField("00:00");
+	private final TextField searchTimeTo = new TextField("23:59");
 
-  /**
-   * Starts the JavaFX application by initializing and setting up the primary stage,
-   * including the layout, table configuration, user input fields, and event handling.
-   *
-   * @param primaryStage the primary stage for the application, provided by the JavaFX runtime.
-   */
-  @Override
-  public void start(Stage primaryStage){
-    List<String> rawArgs = getParameters().getRaw();
-    if(rawArgs != null && !rawArgs.isEmpty()){
-      Panel.PATH = rawArgs.getFirst();
-    }
-    else return;
-    // layout setup
-    VBox verticalLayout = new VBox(10);
-    verticalLayout.setPadding(new Insets(10));
-    verticalLayout.getChildren().addAll(hint, tableShow);
-    verticalLayout.getChildren().add(new HBox(10, dateTimePickerSince, searchTimeFrom, DateTimePickerUntil, searchTimeTo, searchByLogin, method, search));
+	private final DateTimePicker dateTimePickerSince = new DateTimePicker();
+	private final DateTimePicker dateTimePickerUntil = new DateTimePicker();
 
-    // buttons and menus params
-    hint.setEditable(false);
-    hint.setBackground(null);
-    searchByLogin.setPromptText("Логін");
-    method.setPromptText("Метод для пошуку");
-    searchTimeFrom.setPromptText("Початок часу");
-    searchTimeFrom.setMaxSize(45, 25);
-    searchTimeTo.setPromptText("Кінець часу");
-    searchTimeTo.setMaxSize(45, 25);
-    dateTimePickerSince.setMaxSize(100, 25);
-    DateTimePickerUntil.setMaxSize(100, 25);
-    dateTimePickerSince.setValue(since.toLocalDate());
-    DateTimePickerUntil.setValue(until.toLocalDate());
+	private LocalDateTime since = LocalDateTime.now().minusYears(1);
+	private LocalDateTime until = LocalDateTime.now();
+	private final List<TableRowDTO> tdoList = new ArrayList<>();
 
-    // table params
-    tableShow.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-    tableShow.getSelectionModel().setCellSelectionEnabled(true);
-    tableShow.setTableMenuButtonVisible(true);
-    tableShow.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+	/**
+	 * Starts the JavaFX application by initializing and setting up the primary stage,
+	 * including the layout, table configuration, user input fields, and event handling.
+	 *
+	 * @param primaryStage the primary stage for the application, provided by the JavaFX runtime.
+	 */
+	@Override
+	public void start(Stage primaryStage){
+		List<String> rawArgs = getParameters().getRaw();
+		if(rawArgs != null && !rawArgs.isEmpty()){
+			Panel.PATH = rawArgs.getFirst();
+		}
+		else return;
 
-    // table hydration with yesterday period
-    ObservableList<TableRowDTO> tdoList = FXCollections.observableArrayList(getTDOList(since, until));
-    tableShow.setItems(tdoList);
+		tdoList.addAll(getTDOList(since, until));
 
-    // columns setup ------------------
-    tableColumnTime.setCellValueFactory(new PropertyValueFactory<>("dateTime"));
-    tableColumnLogin.setCellValueFactory(new PropertyValueFactory<>("login"));
-    tableColumnHost.setCellValueFactory(new PropertyValueFactory<>("host"));
-//        tableColumnSession.setCellValueFactory(new PropertyValueFactory<>("session"));
-    tableColumnClass.setCellValueFactory(new PropertyValueFactory<>("clazz"));
-    tableColumnMethod.setCellValueFactory(new PropertyValueFactory<>("method"));
-    tableColumnParam.setCellValueFactory(new PropertyValueFactory<>("param"));
-    tableColumnResponse.setCellValueFactory(new PropertyValueFactory<>("serverResponse"));
+		// layout setup
+		VBox verticalLayout = new VBox(10);
+		verticalLayout.setPadding(new Insets(10));
+		verticalLayout.getChildren().addAll(hint, tableShow);
+		verticalLayout.getChildren().add(new HBox(10, dateTimePickerSince, searchTimeFrom, dateTimePickerUntil, searchTimeTo, loginComboBox, methodComboBox, maskField, searchButton));
 
-    // columns setup ------------------
-    //noinspection unchecked
-    tableShow.getColumns().addAll(tableColumnTime, tableColumnLogin, tableColumnHost,
-        tableColumnClass, tableColumnMethod, tableColumnParam, tableColumnResponse);
+		// buttons and menus params
+		hint.setEditable(false);
+		hint.setBackground(null);
 
-    // login dropMenu
-    searchByLogin.setEditable(true);
-    List<String> availableLogins = new ArrayList<>(LoginsAccessor.parseLogins());
-    availableLogins.add("Все");
-    availableLogins.add(availableLogins.getFirst().replace("(logins:", ""));
-    availableLogins.removeFirst();
-    availableLogins.removeLast();
-    availableLogins.sort(Comparator.naturalOrder());
-    searchByLogin.setItems(FXCollections.observableArrayList(availableLogins));
-    searchByLogin.setEditable(true);
-    this.searchByLogin.setValue("Все");
+		loginComboBox.setEditable(true);
+		loginComboBox.setPromptText("Логін");
 
-    // search press event
-    searchButtonAction(tdoList);
+		methodComboBox.setEditable(true);
+		methodComboBox.setPromptText("Пошук за методом");
+
+		maskField.setPromptText("Пошук по масці");
+
+		searchTimeFrom.setPromptText("Початок часу");
+		searchTimeFrom.setMaxSize(45, 25);
+		searchTimeTo.setPromptText("Кінець часу");
+		searchTimeTo.setMaxSize(45, 25);
+
+		dateTimePickerSince.setMaxSize(100, 25);
+		dateTimePickerUntil.setMaxSize(100, 25);
+
+		dateTimePickerSince.setValue(since.toLocalDate());
+		dateTimePickerUntil.setValue(until.toLocalDate());
+
+		// table params
+		tableShow.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		tableShow.getSelectionModel().setCellSelectionEnabled(true);
+		tableShow.setTableMenuButtonVisible(true);
+		tableShow.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+		// columns setup ------------------
+
+		tableColumnTime.setCellValueFactory(new PropertyValueFactory<>("dateTime"));
+		tableColumnTime.setCellFactory(_ -> new TableCell<>(){
+			@Override
+			protected void updateItem(LocalDateTime item, boolean empty){
+				super.updateItem(item, empty);
+				if(item == null || empty){
+					setText(null);
+				}
+				else{
+					setText(formatter.format(item));
+				}
+			}
+		});
+		tableColumnTime.setPrefWidth(120);
+
+		tableColumnLogin.setCellValueFactory(new PropertyValueFactory<>("login"));
+		tableColumnHost.setCellValueFactory(new PropertyValueFactory<>("host"));
+
+		tableColumnClass.setCellValueFactory(new PropertyValueFactory<>("clazz"));
+		tableColumnClass.setCellFactory(_ -> new TableCell<>(){
+			@Override
+			protected void updateItem(String item, boolean empty){
+				super.updateItem(item, empty);
+				if(item == null || empty){
+					setText(null);
+				}
+				else{
+					setText(item.replace(".", ""));
+				}
+			}
+		});
+
+		tableColumnMethod.setCellValueFactory(new PropertyValueFactory<>("method"));
+		tableColumnParam.setCellValueFactory(new PropertyValueFactory<>("param"));
+		tableColumnResponse.setCellValueFactory(new PropertyValueFactory<>("serverResponse"));
+
+		// columns setup ------------------
+		tableShow.getColumns().addAll(tableColumnTime, tableColumnLogin, tableColumnHost,
+				tableColumnClass, tableColumnMethod, tableColumnParam, tableColumnResponse);
+
+		// login ComboBox
+		loginComboBoxSetup();
+		// method ComboBox
+		methodComboBoxSetup();
+		// events
+		setDateTimePickerSinceAction();
+		setDateTimePickerUntilAction();
+		setLoginComboBoxAction();
+		setMethodComboBoxAction();
+		setMaskFieldAction();
+		setSearchButtonAction();
+
+		// scene/stage setup
+		copyFromCellAction();
+		Scene scene = new Scene(verticalLayout, 1200, 400);
+		try{
+			scene.getStylesheets().add("style.css");
+		}
+		catch(NullPointerException e){
+			System.err.println("Could not load stylesheet: " + e.getMessage());
+		}
+		primaryStage.setScene(scene);
+		primaryStage.setTitle("Log Parser");
+		primaryStage.show();
+	}
+
+	private void setSearchButtonAction(){
+		searchButton.setOnAction(event -> {
+			Objects.requireNonNull(event);
+			String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
+			tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
+					.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
+					.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
+					.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
+					.toList()));
+		});
+	}
+
+	private void setMethodComboBoxAction(){
+		methodComboBox.setOnKeyPressed(event -> {
+			Objects.requireNonNull(event);
+			if(event.getCode() == KeyCode.ENTER){
+				tableShow.setItems(
+						FXCollections.observableArrayList(
+								tdoList.stream().filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(methodComboBox.getEditor().getText().toLowerCase())).toList()
+						)
+				);
+			}
+		});
+	}
+
+	private void setLoginComboBoxAction(){
+		loginComboBox.setOnKeyPressed(event -> {
+			Objects.requireNonNull(event);
+			if(event.getCode() == KeyCode.ENTER){
+				tableShow.setItems(
+						FXCollections.observableArrayList(
+								tdoList.stream().filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(loginComboBox.getEditor().getText().toLowerCase())).toList()
+						)
+				);
+			}
+		});
+	}
+
+	private void setMaskFieldAction(){
+		maskField.setOnKeyPressed(event -> {
+			Objects.requireNonNull(event);
+			if(event.getCode() == KeyCode.ENTER){
+				tableShow.setItems(
+						FXCollections.observableArrayList(
+								tdoList.stream().filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(maskField.getText().toLowerCase())).toList()
+						)
+				);
+			}
+		});
+	}
+
+	private void setDateTimePickerSinceAction(){
+		dateTimePickerSince.setOnAction(event -> {
+			Objects.requireNonNull(event);
+			if(dateTimePickerSince.getDateTimeValue() != null){
+				since = dateTimePickerSince.getDateTimeValue();
+				tdoList.clear();
+				tdoList.addAll(getTDOList(since, until));
+			}
+		});
+	}
+
+	private void setDateTimePickerUntilAction(){
+		dateTimePickerUntil.setOnAction(event -> {
+			Objects.requireNonNull(event);
+			if(dateTimePickerUntil.getDateTimeValue() != null){
+				until = dateTimePickerUntil.getDateTimeValue();
+				tdoList.clear();
+				tdoList.addAll(getTDOList(since, until));
+			}
+		});
+	}
 
 
-    // tooltip over cell
-//        tableShow.setOnMouseClicked(event -> {
-//            if (event.getClickCount() == 1) {
-//                TablePosition<?, ?> pos = tableShow.getSelectionModel().getSelectedCells().getFirst();
-//                Object data = pos.getTableColumn().getCellData(pos.getRow());
-//                Tooltip tooltip = new Tooltip(data != null ? data.toString() : "");
-//                tooltip.show(tableShow, event.getScreenX(), event.getScreenY());
-//            }
-//        });
+	private void methodComboBoxSetup(){
+		List<String> availableMethods = new ArrayList<>();
+		for(TableRowDTO tableRowDTO : tdoList){
+			if(!availableMethods.contains(tableRowDTO.getMethod())){
+				availableMethods.add(tableRowDTO.getMethod());
+			}
+		}
+		methodComboBox.setItems(FXCollections.observableList(availableMethods));
+	}
 
-    copyFromCellAction();
-    Scene scene = new Scene(verticalLayout, 1000, 400);
-    try{
-      scene.getStylesheets().add("style.css");
-    }
-    catch(NullPointerException e){
-      System.err.println("Could not load stylesheet: " + e.getMessage());
-    }
+	private void loginComboBoxSetup(){
+		List<String> availableLogins = new ArrayList<>(Objects.requireNonNull(LoginsAccessor.parseLogins()));
+		availableLogins.sort(Comparator.naturalOrder());
+		loginComboBox.setItems(FXCollections.observableArrayList(availableLogins));
+	}
 
+	private void copyFromCellAction(){
+		tableShow.setOnKeyPressed(event -> {
+			if(event.isControlDown() && event.getCode() == KeyCode.C){
+				StringBuilder cb = new StringBuilder();
+				ObservableList<TablePosition> cells = tableShow.getSelectionModel().getSelectedCells();
 
-    primaryStage.setScene(scene);
-    primaryStage.setTitle("Log Parser");
-    primaryStage.show();
-  }
+				// Loop through cells and format as tab-separated values
+				int lastRow = -1;
+				for(TablePosition<?, ?> pos : cells){
+					if(lastRow != -1 && lastRow != pos.getRow()) cb.append("\n");
+					else if(lastRow != -1) cb.append("\t");
 
-  private void searchButtonAction(ObservableList<TableRowDTO> tdoList){
-    search.setOnAction(event -> {
-      try{
-        tdoList.clear();
+					Object data = pos.getTableColumn().getCellData(pos.getRow());
+					cb.append(data != null ? data.toString() : "");
+					lastRow = pos.getRow();
+				}
 
-        // basic pass tests
-        if(since.isAfter(until)){
-          Alert alert = new Alert(Alert.AlertType.ERROR, "Початок часу не може бути пізніше кінця часу");
-          alert.showAndWait();
-          return;
-        }
-        if(searchTimeFrom.getText().isEmpty() || searchTimeFrom.getText().isBlank()){
-          searchTimeFrom.setText("00:00");
-        }
-        if(searchTimeTo.getText().isEmpty() || searchTimeTo.getText().isBlank()) searchTimeTo.setText("23:59");
+				// Copy to clipboard
+				ClipboardContent content = new ClipboardContent();
+				content.putString(cb.toString());
+				Clipboard.getSystemClipboard().setContent(content);
+			}
+		});
+	}
 
-        // local variables
-        since = LocalDateTime.of(dateTimePickerSince.getValue(), LocalTime.parse(searchTimeFrom.getText()));
-        until = LocalDateTime.of(DateTimePickerUntil.getValue(), LocalTime.parse(searchTimeTo.getText()));
-
-        // display logic
-        if(searchByLogin.getValue().equals("Все") &&
-            method.getText().isEmpty()){
-          tdoList.addAll(getTDOList(since, until));
-          tableShow.setItems(tdoList);
-
-        }
-        else if(method.getText().isEmpty()){
-
-          tdoList.addAll(getTDOList(since, until));
-          tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
-              .filter(tdo -> tdo.getLogin().contains(searchByLogin.getValue()))
-              .toList()));
-
-        }
-        else{
-          tdoList.addAll(getTDOList(since, until));
-          tableShow.setItems(tdoList);
-        }
-      }
-      catch(DateTimeParseException e){
-        Alert alert = new Alert(Alert.AlertType.ERROR, "Невірний формат часу: ");
-        alert.showAndWait();
-      }
-    });
-  }
-
-  private void copyFromCellAction(){
-    tableShow.setOnKeyPressed(event -> {
-      if(event.isControlDown() && event.getCode() == KeyCode.C){
-        StringBuilder cb = new StringBuilder();
-        ObservableList<TablePosition> cells = tableShow.getSelectionModel().getSelectedCells();
-
-        // Loop through cells and format as tab-separated values
-        int lastRow = -1;
-        for(TablePosition<?, ?> pos : cells){
-          if(lastRow != -1 && lastRow != pos.getRow()) cb.append("\n");
-          else if(lastRow != -1) cb.append("\t");
-
-          Object data = pos.getTableColumn().getCellData(pos.getRow());
-          cb.append(data != null? data.toString() : "");
-          lastRow = pos.getRow();
-        }
-
-        // Copy to clipboard
-        ClipboardContent content = new ClipboardContent();
-        content.putString(cb.toString());
-        Clipboard.getSystemClipboard().setContent(content);
-      }
-    });
-  }
-
-  private List<TableRowDTO> getTDOList(LocalDateTime parsedDateTimeFrom, LocalDateTime parsedDateTimeTo){
-    List<TableRowDTO> list = new ArrayList<>();
-    new LocalFileRider(parsedDateTimeFrom, parsedDateTimeTo){
-      @Override
-      protected void addItemToScope(TableRowDTO rowDTO){
-        if(Objects.nonNull(rowDTO)) list.add(rowDTO);
-      }
-    }.doAction();
-    return list;
-  }
+	private List<TableRowDTO> getTDOList(LocalDateTime parsedDateTimeFrom, LocalDateTime parsedDateTimeTo){
+		List<TableRowDTO> list = new ArrayList<>();
+		new LocalFileRider(parsedDateTimeFrom, parsedDateTimeTo){
+			@Override
+			protected void addItemToScope(TableRowDTO rowDTO){
+				if(Objects.nonNull(rowDTO)) list.add(rowDTO);
+			}
+		}.doAction();
+		list.removeIf(tableRowDTO -> tableRowDTO.getMethod().equals("getUserAttAction"));
+		return list;
+	}
 }
