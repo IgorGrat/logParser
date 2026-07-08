@@ -3,6 +3,7 @@ package ua.edg.logparser.gui;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,6 +11,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -172,55 +174,37 @@ public class JavaFX extends Application{
 		primaryStage.show();
 	}
 
-	private void setSearchButtonAction(){
-		searchButton.setOnAction(event -> {
-			Objects.requireNonNull(event);
-			String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
-			tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
-					.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
-					.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
-					.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
-					.toList()));
-		});
+	private void setTableShowItemsByHBOXValues(ActionEvent event){
+		Objects.requireNonNull(event);
+		String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
+		tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
+				.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
+				.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
+				.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
+				.toList()));
 	}
 
+	private void setTableShowItemsByHBOXValues(KeyEvent event){
+		if(event.getCode() == KeyCode.ENTER){
+			setTableShowItemsByHBOXValues(new ActionEvent());
+		}
+	}
+
+	private void setSearchButtonAction(){
+		searchButton.setOnAction(this::setTableShowItemsByHBOXValues);
+	}
+
+
 	private void setMethodComboBoxAction(){
-		methodComboBox.setOnKeyPressed(event -> {
-			Objects.requireNonNull(event);
-			if(event.getCode() == KeyCode.ENTER){
-				tableShow.setItems(
-						FXCollections.observableArrayList(
-								tdoList.stream().filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(methodComboBox.getEditor().getText().toLowerCase())).toList()
-						)
-				);
-			}
-		});
+		methodComboBox.setOnKeyPressed(this::setTableShowItemsByHBOXValues);
 	}
 
 	private void setLoginComboBoxAction(){
-		loginComboBox.setOnKeyPressed(event -> {
-			Objects.requireNonNull(event);
-			if(event.getCode() == KeyCode.ENTER){
-				tableShow.setItems(
-						FXCollections.observableArrayList(
-								tdoList.stream().filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(loginComboBox.getEditor().getText().toLowerCase())).toList()
-						)
-				);
-			}
-		});
+		loginComboBox.setOnKeyPressed(this::setTableShowItemsByHBOXValues);
 	}
 
 	private void setMaskFieldAction(){
-		maskField.setOnKeyPressed(event -> {
-			Objects.requireNonNull(event);
-			if(event.getCode() == KeyCode.ENTER){
-				tableShow.setItems(
-						FXCollections.observableArrayList(
-								tdoList.stream().filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(maskField.getText().toLowerCase())).toList()
-						)
-				);
-			}
-		});
+		maskField.setOnKeyPressed(this::setTableShowItemsByHBOXValues);
 	}
 
 	private void setDateTimePickerSinceAction(){
