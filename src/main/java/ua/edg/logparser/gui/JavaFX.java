@@ -16,13 +16,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import transimpex.logParser.TableRowDTO;
-import ua.edg.conector.LoginsAccessor;
 import ua.edg.logparser.parser.LocalFileRider;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,7 +52,7 @@ public class JavaFX extends Application{
 	private final DateTimePicker dateTimePickerSince = new DateTimePicker();
 	private final DateTimePicker dateTimePickerUntil = new DateTimePicker();
 
-	private LocalDateTime since = LocalDateTime.now().minusYears(1);
+	private LocalDateTime since = LocalDateTime.now();
 	private LocalDateTime until = LocalDateTime.now();
 	private final List<TableRowDTO> tdoList = new ArrayList<>();
 
@@ -153,8 +154,8 @@ public class JavaFX extends Application{
 		// method ComboBox
 		methodComboBoxSetup();
 		// events
-		setDateTimePickerSinceAction();
-		setDateTimePickerUntilAction();
+//		setDateTimePickerSinceAction();
+//		setDateTimePickerUntilAction();
 		setLoginComboBoxAction();
 		setMethodComboBoxAction();
 		setMaskFieldAction();
@@ -176,8 +177,20 @@ public class JavaFX extends Application{
 
 	private void setTableShowItemsByHBOXValues(ActionEvent event){
 		Objects.requireNonNull(event);
+		if(dateTimePickerSince.getDateTimeValue() != null && dateTimePickerUntil.getDateTimeValue() != null){
+
+			LocalDate startDate = dateTimePickerSince.getDateTimeValue().toLocalDate();
+			LocalDate untilDate = dateTimePickerUntil.getDateTimeValue().toLocalDate();
+			since = LocalDateTime.of(startDate, LocalTime.parse(searchTimeFrom.getText()));
+			until = LocalDateTime.of(untilDate, LocalTime.parse(searchTimeTo.getText()));
+			tdoList.clear();
+			tdoList.addAll(getTDOList(since, until));
+		}
 		String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
 		tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
+				.filter(tableRowDTO ->
+						tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) >= since.toEpochSecond(ZoneOffset.UTC) &&
+								tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) <= until.toEpochSecond(ZoneOffset.UTC))
 				.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
 				.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
 				.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
@@ -207,27 +220,27 @@ public class JavaFX extends Application{
 		maskField.setOnKeyPressed(this::setTableShowItemsByHBOXValues);
 	}
 
-	private void setDateTimePickerSinceAction(){
-		dateTimePickerSince.setOnAction(event -> {
-			Objects.requireNonNull(event);
-			if(dateTimePickerSince.getDateTimeValue() != null){
-				since = dateTimePickerSince.getDateTimeValue();
-				tdoList.clear();
-				tdoList.addAll(getTDOList(since, until));
-			}
-		});
-	}
-
-	private void setDateTimePickerUntilAction(){
-		dateTimePickerUntil.setOnAction(event -> {
-			Objects.requireNonNull(event);
-			if(dateTimePickerUntil.getDateTimeValue() != null){
-				until = dateTimePickerUntil.getDateTimeValue();
-				tdoList.clear();
-				tdoList.addAll(getTDOList(since, until));
-			}
-		});
-	}
+//	private void setDateTimePickerSinceAction(){
+//		dateTimePickerSince.setOnAction(event -> {
+//			Objects.requireNonNull(event);
+//			if(dateTimePickerSince.getDateTimeValue() != null){
+//				since = dateTimePickerSince.getDateTimeValue();
+//				tdoList.clear();
+//				tdoList.addAll(getTDOList(since, until));
+//			}
+//		});
+//	}
+//
+//	private void setDateTimePickerUntilAction(){
+//		dateTimePickerUntil.setOnAction(event -> {
+//			Objects.requireNonNull(event);
+//			if(dateTimePickerUntil.getDateTimeValue() != null){
+//				until = dateTimePickerUntil.getDateTimeValue();
+//				tdoList.clear();
+//				tdoList.addAll(getTDOList(since, until));
+//			}
+//		});
+//	}
 
 
 	private void methodComboBoxSetup(){
@@ -241,9 +254,9 @@ public class JavaFX extends Application{
 	}
 
 	private void loginComboBoxSetup(){
-		List<String> availableLogins = new ArrayList<>(Objects.requireNonNull(LoginsAccessor.parseLogins()));
-		availableLogins.sort(Comparator.naturalOrder());
-		loginComboBox.setItems(FXCollections.observableArrayList(availableLogins));
+//		List<String> availableLogins = new ArrayList<>(Objects.requireNonNull(LoginsAccessor.parseLogins()));
+//		availableLogins.sort(Comparator.naturalOrder());
+//		loginComboBox.setItems(FXCollections.observableArrayList(availableLogins));
 	}
 
 	private void copyFromCellAction(){
