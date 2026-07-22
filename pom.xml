@@ -61,7 +61,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>false</addClasspath>
-                            <mainClass>ua.edg.logparser.gui.JavaFX</mainClass>
+                            <mainClass>ua.edg.logparser.gui.LauncherJavaFX</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -96,7 +96,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>ua.edg.logparser.gui.JavaFX</mainClass>
+                    <mainClass>ua.edg.logparser.gui.LauncherJavaFX</mainClass>
                 </configuration>
             </plugin>
         </plugins>

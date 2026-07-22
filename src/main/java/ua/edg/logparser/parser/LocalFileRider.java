@@ -37,10 +37,10 @@ public abstract class LocalFileRider{
 	}
 
 	public void doAction(){
-		String prefix = baseFile + ".dd.MM.yyyy.";
-		File folder = new File(PATH);
+//		String prefix = baseFile + ".dd.MM.yyyy.";
+    File folder = new File(PATH);
 		File base = new File(folder, baseFile);
-		int length = prefix.length();
+		int length = baseFile.length();
 		File[] files = folder.listFiles((dir, name) -> name.length() > length && name.substring(length).matches("[0-9]*"));
 		List<File> fileList = new ArrayList<>();
 
