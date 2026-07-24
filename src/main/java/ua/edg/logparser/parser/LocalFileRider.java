@@ -37,10 +37,10 @@ public abstract class LocalFileRider{
 	}
 
 	public void doAction(){
-//		String prefix = baseFile + ".dd.MM.yyyy.";
+		String prefix = baseFile + ".dd.MM.yyyy.";
     File folder = new File(PATH);
 		File base = new File(folder, baseFile);
-		int length = baseFile.length();
+		int length = prefix.length();
 		File[] files = folder.listFiles((dir, name) -> name.length() > length && name.substring(length).matches("[0-9]*"));
 		List<File> fileList = new ArrayList<>();
 
@@ -55,9 +55,9 @@ public abstract class LocalFileRider{
 		for(File file : fileList){
 			String[] parts = file.getName().split("\\.");
 			String dateStr = parts[4] + "-" + parts[3] + "-" + parts[2];
-			LocalDate fileCreated = LocalDate.parse(dateStr);
-			if(fileCreated.isAfter(from_this_date.toLocalDate()) && fileCreated.isBefore(to_this_date.toLocalDate()) ||
-					fileCreated.equals(from_this_date.toLocalDate()) || fileCreated.equals(to_this_date.toLocalDate())){
+			LocalDate lastFileRowDate = LocalDate.parse(dateStr);
+			if(lastFileRowDate.isAfter(from_this_date.toLocalDate()) && lastFileRowDate.isBefore(to_this_date.toLocalDate()) ||
+					lastFileRowDate.equals(from_this_date.toLocalDate()) || lastFileRowDate.equals(to_this_date.toLocalDate())){
 				getContents(file);
 			}
 		}
