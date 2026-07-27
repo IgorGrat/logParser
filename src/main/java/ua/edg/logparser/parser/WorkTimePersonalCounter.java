@@ -1,148 +1,173 @@
 package ua.edg.logparser.parser;
 
+import transimpex.WrapAgent;
+import transimpex.logParser.TableRowDTO;
+import ua.edg.logparser.Models.TableRowDAO;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import transimpex.WrapAgent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  * @author uncle
  */
 public class WorkTimePersonalCounter{
-  
-  public static class OneDayUnit{
-    public long busy_second;
-    public final long[] workingPeriodHours;
-    private final LocalDateTime startMomentOfDay;
-    private final LocalDateTime endMomentDay;
-    private LocalDateTime lastActivity;
-    
-    public OneDayUnit(int workHours, LocalDateTime day){
-      this.workingPeriodHours = new long[workHours];
-      this.startMomentOfDay = day;
-      this.lastActivity = day;
-      this.endMomentDay = day.plusHours(workHours);
-    }
-  }
-  public static class UserTimeCount{
-    
-    public final List<OneDayUnit> daysPeriod;
-    private final LocalDateTime startPeriod;
-//    private final LocalDateTime endPeriod;
-    private final long hours;
-    private final int allowTimeToRestSec;
-    private final int shiftTime;
 
-    public UserTimeCount(LocalDateTime startPeriod, LocalDateTime endPeriod,
-    int hours, int allowTimeToRestMin, int shiftTime){
-      this.startPeriod = startPeriod;
+	public static class OneDayUnit{
+
+		public long busy_second;
+		public final long[] workingPeriodHours;
+		private final LocalDateTime startMomentOfDay;
+		private final LocalDateTime endMomentDay;
+		private LocalDateTime lastActivity;
+
+		public OneDayUnit(int workHours, LocalDateTime day){
+			this.workingPeriodHours = new long[workHours];
+			this.startMomentOfDay = day;
+			this.lastActivity = day;
+			this.endMomentDay = day.plusHours(workHours);
+		}
+	}
+
+	public static class UserTimeCount{
+
+		public final List<OneDayUnit> daysPeriod;
+		private final LocalDateTime startPeriod;
+		//    private final LocalDateTime endPeriod;
+		private final long hours;
+		private final int allowTimeToRestSec;
+		private final int shiftTime;
+
+		public UserTimeCount(LocalDateTime startPeriod, LocalDateTime endPeriod,
+		                     int hours, int allowTimeToRestMin, int shiftTime){
+			this.startPeriod = startPeriod;
 //    this.endPeriod = endPeriod;
-      int days = (int)ChronoUnit.DAYS.between(startPeriod, endPeriod) + 1;
-      daysPeriod = new ArrayList<>(days);
-      LocalDateTime previousDay = startPeriod.minusDays(1);
-      for(int i = 0; i < days; i ++){
-        daysPeriod.add(new OneDayUnit(hours, previousDay = previousDay.plusDays(1)));
-      }
-      this.hours = hours;
-      this.allowTimeToRestSec = allowTimeToRestMin * 60;
-      this.shiftTime = shiftTime;
-    }
-//    public boolean addActivity(LocalDateTime currentActivity){
-    public void addActivity(LocalDateTime currentActivity){
+			int days = (int) ChronoUnit.DAYS.between(startPeriod, endPeriod) + 1;
+			daysPeriod = new ArrayList<>(days);
+			LocalDateTime previousDay = startPeriod.minusDays(1);
+			for(int i = 0; i < days; i++){
+				daysPeriod.add(new OneDayUnit(hours, previousDay = previousDay.plusDays(1)));
+			}
+			this.hours = hours;
+			this.allowTimeToRestSec = allowTimeToRestMin * 60;
+			this.shiftTime = shiftTime;
+		}
+
+		//    public boolean addActivity(LocalDateTime currentActivity){
+		public void addActivity(LocalDateTime currentActivity){
 //      if(currentActivity.isBefore(startPeriod)){
 //        return true;
 //      }
 //      if(currentActivity.isAfter(endPeriod)){
 //        return false;
 //      }
-      int diffDay = (int)ChronoUnit.DAYS.between(startPeriod, currentActivity);
-      OneDayUnit dayUnit = daysPeriod.get(diffDay);
-      if(currentActivity.isBefore(dayUnit.startMomentOfDay) ||
-        currentActivity.isAfter(dayUnit.endMomentDay)){
+			int diffDay = (int) ChronoUnit.DAYS.between(startPeriod, currentActivity);
+			OneDayUnit dayUnit = daysPeriod.get(diffDay);
+			if(currentActivity.isBefore(dayUnit.startMomentOfDay) ||
+					currentActivity.isAfter(dayUnit.endMomentDay)){
 //        return true;
-        return;
-      }
-      long second_current_activity = ChronoUnit.SECONDS.between(
-      dayUnit.lastActivity, currentActivity);
-      if(second_current_activity <= allowTimeToRestSec){
-        dayUnit.busy_second += second_current_activity;
-        dayUnit.lastActivity = currentActivity;
+				return;
+			}
+			long second_current_activity = ChronoUnit.SECONDS.between(
+					dayUnit.lastActivity, currentActivity);
+			if(second_current_activity <= allowTimeToRestSec){
+				dayUnit.busy_second += second_current_activity;
+				dayUnit.lastActivity = currentActivity;
 //        return true;
-        return;
-      }
-      LocalDateTime start = dayUnit.lastActivity.plusSeconds(30).withSecond(0);
-      LocalDateTime end = currentActivity.plusSeconds(30).withSecond(0);
-      long minute_withOut_work = ChronoUnit.MINUTES.between(start, end);
-      int first_min_period = start.getMinute();
-      int hour = start.getHour();
+				return;
+			}
+			LocalDateTime start = dayUnit.lastActivity.plusSeconds(30).withSecond(0);
+			LocalDateTime end = currentActivity.plusSeconds(30).withSecond(0);
+			long minute_withOut_work = ChronoUnit.MINUTES.between(start, end);
+			int first_min_period = start.getMinute();
+			int hour = start.getHour();
 
-      int minInHour = 60;
-      long[] itemHours = dayUnit.workingPeriodHours;
-      while(minute_withOut_work > 0 && hour - shiftTime < hours){
-        int rest_of_hour = minInHour - first_min_period;
-        int able_quantity_min_in_hour = (int)Math.min(
-        rest_of_hour, minute_withOut_work) + first_min_period;
-        for(int begin = first_min_period; begin < able_quantity_min_in_hour; begin ++){
-          itemHours[hour - shiftTime] = itemHours[hour - shiftTime] + (1L << 59 - begin);
-          minute_withOut_work --;
-        }
-        first_min_period = 0; hour ++;
-      }
-      dayUnit.lastActivity = currentActivity;
+			int minInHour = 60;
+			long[] itemHours = dayUnit.workingPeriodHours;
+			while(minute_withOut_work > 0 && hour - shiftTime < hours){
+				int rest_of_hour = minInHour - first_min_period;
+				int able_quantity_min_in_hour = (int) Math.min(
+						rest_of_hour, minute_withOut_work) + first_min_period;
+				for(int begin = first_min_period; begin < able_quantity_min_in_hour; begin++){
+					itemHours[hour - shiftTime] = itemHours[hour - shiftTime] + (1L << 59 - begin);
+					minute_withOut_work--;
+				}
+				first_min_period = 0;
+				hour++;
+			}
+			dayUnit.lastActivity = currentActivity;
 //      return true;
-    }
-    public void closeTimePeriod(){
-      for(OneDayUnit odu : daysPeriod){
-        LocalDateTime endPeriod = odu.endMomentDay;
-        addActivity(endPeriod);
-      }
-    }
-  }
-  public void scannerPeriod(WrapAgent source){
-    String[] logins = source.getStringPack()[0];
-    LocalTime beginLocalTime = LocalTime.of(8, 0);
-    int period_hours = 11;
-    LocalTime endLocalTime = beginLocalTime.plusHours(period_hours);
+		}
+
+		public void closeTimePeriod(){
+			for(OneDayUnit odu : daysPeriod){
+				LocalDateTime endPeriod = odu.endMomentDay;
+				addActivity(endPeriod);
+			}
+		}
+	}
+
+	public void scannerPeriod(WrapAgent source){
+		String[] logins = source.getStringPack()[0];
+		LocalTime beginLocalTime = LocalTime.of(8, 0);
+		int period_hours = 11;
+		LocalTime endLocalTime = beginLocalTime.plusHours(period_hours);
 //    String baseFile = "log.txt";
 //    String prefix = baseFile + ".";
-    int allowToRestMin = 15;
-    long[] dates = source.getLongPack()[0];
-    LocalDate first = LocalDate.ofEpochDay(dates[0]);
-    LocalDate second = LocalDate.ofEpochDay(dates[1]);
-    LocalDateTime from_this_date = LocalDateTime.of(first, beginLocalTime);
-    LocalDateTime to_this_date = LocalDateTime.of(second, endLocalTime);
+		int allowToRestMin = 15;
+		long[] dates = source.getLongPack()[0];
+		LocalDate first = LocalDate.ofEpochDay(dates[0]);
+		LocalDate second = LocalDate.ofEpochDay(dates[1]);
+		LocalDateTime from_this_date = LocalDateTime.of(first, beginLocalTime);
+		LocalDateTime to_this_date = LocalDateTime.of(second, endLocalTime);
 //    File folder = new File(PATH);
 //    File base = new File(folder, baseFile);
 
-    final Map<String, UserTimeCount> scope = new HashMap<>();
-    int shift_time = beginLocalTime.getHour();
-    for(String login : logins){
-      scope.put(login, new UserTimeCount(from_this_date, to_this_date,
-        period_hours, allowToRestMin, shift_time));
-    }
+		final Map<String, UserTimeCount> scope = new HashMap<>();
+		int shift_time = beginLocalTime.getHour();
+		for(String login : logins){
+			scope.put(login, new UserTimeCount(from_this_date, to_this_date,
+					period_hours, allowToRestMin, shift_time));
+		}
 
+		TableRowDAO tableRowDAO = new TableRowDAO();
+
+		List<TableRowDTO> dtos = tableRowDAO.getAllByDateRange(from_this_date, to_this_date);
+		for(TableRowDTO dto : dtos){
+			String login = dto.getLogin();
+			UserTimeCount utc = scope.get(login);
+			if(utc == null){
+				return;
+			}
+			if(dto.getClazz().equals("General.") && dto.getMethod().equals("getUserAttAction")){
+				return;
+			}
+			utc.addActivity(dto.getDateTime());
+		}
 //  LocalFileRider fileReader = new LocalFileRider(from_this_date, to_this_date){
-    new LocalFileRider(from_this_date, to_this_date){
-      @Override
-      protected void addItemToScope(transimpex.logParser.TableRowDTO dTO){
-        String login = dTO.getLogin();
-        UserTimeCount utc = scope.get(login);
-        if(utc == null){
-          return;
-        }
-        if(dTO.getClazz().equals("General.") && dTO.getMethod().equals("getUserAttAction")){
-          return;
-        }
-        utc.addActivity(dTO.getDateTime());
-//        if(!utc.addActivity(dTO.dateTime)){
-//          doAction = false;
+//    new LocalFileRider(from_this_date, to_this_date){
+//      @Override
+//      protected void addItemToScope(transimpex.logParser.TableRowDTO dTO){
+//        String login = dTO.getLogin();
+//        UserTimeCount utc = scope.get(login);
+//        if(utc == null){
+//          return;
 //        }
-      }
-    }.doAction();
+//        if(dTO.getClazz().equals("General.") && dTO.getMethod().equals("getUserAttAction")){
+//          return;
+//        }
+//        utc.addActivity(dTO.getDateTime());
+////        if(!utc.addActivity(dTO.dateTime)){
+////          doAction = false;
+////        }
+//      }
+//    }.doAction();
 
 //    int length = prefix.length();
 //    File[] files = folder.listFiles((dir, name) -> name.length() > length && name.substring(length).matches("[0-9]*"));
@@ -155,7 +180,7 @@ public class WorkTimePersonalCounter{
 //    if(base.exists() && base.isFile()){
 //        fileList.add(base);
 //    }
-    /*---------------------------------------------------------------------------------------------------------------*/
+		/*---------------------------------------------------------------------------------------------------------------*/
 //    if(!fileList.isEmpty()){
 //      for(int size = fileList.size(), i = 0; i < size; i++){
 //        File file = fileList.get(i);
@@ -180,13 +205,14 @@ public class WorkTimePersonalCounter{
 //          }
 //        }
 //      }
-      /* 28.04.2026 18:33:16  этот кусок кода был в условии if(!fileList.isEmpty()) - если будут вопросы, значит надо думать */
-      scope.forEach((login, timeCount) -> {
-        timeCount.closeTimePeriod();
-        getUsersData(login, timeCount);
-      });
+		/* 28.04.2026 18:33:16  этот кусок кода был в условии if(!fileList.isEmpty()) - если будут вопросы, значит надо думать */
+		scope.forEach((login, timeCount) -> {
+			timeCount.closeTimePeriod();
+			getUsersData(login, timeCount);
+		});
 //    }
-  }
-  protected void getUsersData(String user, UserTimeCount utc){
-  }
+	}
+
+	protected void getUsersData(String user, UserTimeCount utc){
+	}
 }
