@@ -16,7 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import transimpex.logParser.TableRowDTO;
-import ua.edg.conector.LoginsAccessor;
+import ua.edg.logparser.Models.TableRowDAO;
 import ua.edg.logparser.parser.LocalFileRider;
 
 import java.time.LocalDate;
@@ -25,7 +25,6 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,8 +47,8 @@ public class JavaFX extends Application{
 	private final Button searchButton = new Button("Шукати");
 	private final TextField maskField = new TextField();
 
-	private final TextField searchTimeFrom = new TextField("00:00");
-	private final TextField searchTimeTo = new TextField("23:59");
+	private final TextField searchTimeSince = new TextField("00:00");
+	private final TextField searchTimeUntil = new TextField("23:59");
 
 	private final DateTimePicker dateTimePickerSince = new DateTimePicker();
 	private final DateTimePicker dateTimePickerUntil = new DateTimePicker();
@@ -57,6 +56,8 @@ public class JavaFX extends Application{
 	private LocalDateTime since = LocalDateTime.now();
 	private LocalDateTime until = LocalDateTime.now();
 	private final List<TableRowDTO> tdoList = new ArrayList<>();
+
+	private final TableRowDAO tableRowDAO = new TableRowDAO();
 
 	/**
 	 * Starts the JavaFX application by initializing and setting up the primary stage,
@@ -72,13 +73,14 @@ public class JavaFX extends Application{
 		}
 		else return;
 
-		tdoList.addAll(getTDOList(since, until));
+//		tdoList.addAll(getTDOList(since, until));
+		tdoList.addAll(tableRowDAO.getAll());
 
 		// layout setup
 		VBox verticalLayout = new VBox(10);
 		verticalLayout.setPadding(new Insets(10));
 		verticalLayout.getChildren().addAll(hint, tableShow);
-		verticalLayout.getChildren().add(new HBox(10, dateTimePickerSince, searchTimeFrom, dateTimePickerUntil, searchTimeTo, loginComboBox, methodComboBox, maskField, searchButton));
+		verticalLayout.getChildren().add(new HBox(10, dateTimePickerSince, searchTimeSince, dateTimePickerUntil, searchTimeUntil, loginComboBox, methodComboBox, maskField, searchButton));
 
 		// buttons and menus params
 		hint.setEditable(false);
@@ -92,10 +94,10 @@ public class JavaFX extends Application{
 
 		maskField.setPromptText("Пошук по масці");
 
-		searchTimeFrom.setPromptText("Початок часу");
-		searchTimeFrom.setMaxSize(45, 25);
-		searchTimeTo.setPromptText("Кінець часу");
-		searchTimeTo.setMaxSize(45, 25);
+		searchTimeSince.setPromptText("Початок часу");
+		searchTimeSince.setMaxSize(45, 25);
+		searchTimeUntil.setPromptText("Кінець часу");
+		searchTimeUntil.setMaxSize(45, 25);
 
 		dateTimePickerSince.setMaxSize(100, 25);
 		dateTimePickerUntil.setMaxSize(100, 25);
@@ -181,12 +183,12 @@ public class JavaFX extends Application{
 		Objects.requireNonNull(event);
 		if(dateTimePickerSince.getDateTimeValue() != null && dateTimePickerUntil.getDateTimeValue() != null){
 
-			LocalDate startDate = dateTimePickerSince.getDateTimeValue().toLocalDate();
+			LocalDate sinceDate = dateTimePickerSince.getDateTimeValue().toLocalDate();
 			LocalDate untilDate = dateTimePickerUntil.getDateTimeValue().toLocalDate();
-			since = LocalDateTime.of(startDate, LocalTime.parse(searchTimeFrom.getText()));
-			until = LocalDateTime.of(untilDate, LocalTime.parse(searchTimeTo.getText()));
+			since = LocalDateTime.of(sinceDate, LocalTime.parse(searchTimeSince.getText()));
+			until = LocalDateTime.of(untilDate, LocalTime.parse(searchTimeUntil.getText()));
 			tdoList.clear();
-			tdoList.addAll(getTDOList(since, until));
+			tdoList.addAll(tableRowDAO.getAllByDateRange(since, until));
 		}
 		String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
 		tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
