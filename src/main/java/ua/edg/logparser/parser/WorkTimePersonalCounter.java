@@ -143,10 +143,10 @@ public class WorkTimePersonalCounter{
 			String login = dto.getLogin();
 			UserTimeCount utc = scope.get(login);
 			if(utc == null){
-				return;
+				continue;
 			}
-			if(dto.getClazz().equals("General.") && dto.getMethod().equals("getUserAttAction")){
-				return;
+			if(dto.getMethod().equals("getUserAttAction")){
+				continue;
 			}
 			utc.addActivity(dto.getDateTime());
 		}
