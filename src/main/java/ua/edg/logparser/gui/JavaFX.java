@@ -16,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import transimpex.logParser.TableRowDTO;
+import ua.edg.conector.LoginsAccessor;
 import ua.edg.logparser.Models.TableRowDAO;
 import ua.edg.logparser.parser.LocalFileRider;
 
@@ -24,12 +25,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class JavaFX extends Application{
 
+	public static final Set<String> LOGINS = new HashSet<>(LoginsAccessor.getLoginsList());
 	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
 	private final TableColumn<TableRowDTO, LocalDateTime> tableColumnTime = new TableColumn<>("Час");
@@ -72,9 +72,6 @@ public class JavaFX extends Application{
 			Panel.PATH = rawArgs.getFirst();
 		}
 		else return;
-
-//		tdoList.addAll(getTDOList(since, until));
-		tdoList.addAll(tableRowDAO.getAll());
 
 		// layout setup
 		VBox verticalLayout = new VBox(10);
@@ -154,7 +151,7 @@ public class JavaFX extends Application{
 				tableColumnClass, tableColumnMethod, tableColumnParam, tableColumnResponse);
 
 		// login ComboBox
-		loginComboBoxSetup();
+		loginComboBoxUpdateLogins();
 		// method ComboBox
 		methodComboBoxSetup();
 		// events
@@ -182,22 +179,24 @@ public class JavaFX extends Application{
 	private void setTableShowItemsByHBOXValues(ActionEvent event){
 		Objects.requireNonNull(event);
 		if(dateTimePickerSince.getDateTimeValue() != null && dateTimePickerUntil.getDateTimeValue() != null){
-
 			LocalDate sinceDate = dateTimePickerSince.getDateTimeValue().toLocalDate();
 			LocalDate untilDate = dateTimePickerUntil.getDateTimeValue().toLocalDate();
 			since = LocalDateTime.of(sinceDate, LocalTime.parse(searchTimeSince.getText()));
 			until = LocalDateTime.of(untilDate, LocalTime.parse(searchTimeUntil.getText()));
 			tdoList.clear();
 			tdoList.addAll(tableRowDAO.getAllByDateRange(since, until));
+//			tdoList.addAll(getTDOList(since, until));
 		}
 		String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
 		tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
 				.filter(tableRowDTO ->
 						tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) >= since.toEpochSecond(ZoneOffset.UTC) &&
 								tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) <= until.toEpochSecond(ZoneOffset.UTC))
+				.filter(tableRowDTO -> !tableRowDTO.getMethod().contains("longPack"))
 				.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
 				.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
 				.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
+				.peek(tableRowDTO -> loginComboBoxAddLogins(tableRowDTO.getLogin()))
 				.toList()));
 	}
 
@@ -257,10 +256,14 @@ public class JavaFX extends Application{
 		methodComboBox.setItems(FXCollections.observableList(availableMethods));
 	}
 
-	private void loginComboBoxSetup(){
-//		List<String> availableLogins = new ArrayList<>(Objects.requireNonNull(LoginsAccessor.parseLogins()));
-//		availableLogins.sort(Comparator.naturalOrder());
-//		loginComboBox.setItems(FXCollections.observableArrayList(availableLogins));
+	private void loginComboBoxUpdateLogins(){
+		ObservableList<String> loginsList = FXCollections.observableArrayList(LoginsAccessor.getLoginsList());
+		loginComboBox.setItems(loginsList);
+	}
+
+	private void loginComboBoxAddLogins(String login){
+		LOGINS.add(login);
+		loginComboBox.setItems(FXCollections.observableArrayList(LOGINS));
 	}
 
 	private void copyFromCellAction(){
@@ -273,7 +276,7 @@ public class JavaFX extends Application{
 				int lastRow = -1;
 				for(TablePosition<?, ?> pos : cells){
 					if(lastRow != -1 && lastRow != pos.getRow()) cb.append("\n");
-					else if(lastRow != -1) cb.append("\t");
+					else if(lastRow != -1) cb.append("\n");
 
 					Object data = pos.getTableColumn().getCellData(pos.getRow());
 					cb.append(data != null ? data.toString() : "");
