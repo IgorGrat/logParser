@@ -78,15 +78,64 @@ public class TableRowDAO{
 		}
 	}
 
-	public List<TableRowDTO> getAllByMask(String where){
+	public List<TableRowDTO> getAllByMask(LocalDateTime since, LocalDateTime until, String mask){
+		String trueMask = "%" + mask + "%";
 		try(Session session = reader.getSessionFactory().openSession()){
-			return session.createQuery("from TableRowDTO where " + where, TableRowDTO.class).list();
+			return session.createQuery("""
+								from TableRowDTO
+								where (dateTime >= :since  and dateTime <= :until)
+								and (login like :mask
+								or host like :mask
+								or clazz like :mask
+								or method like :mask
+								or param like :mask
+								or serverResponse like :mask)
+							""", TableRowDTO.class)
+					.setParameter("since", since)
+					.setParameter("until", until)
+					.setParameter("mask", trueMask)
+					.list();
+		}
+	}
+
+	public List<TableRowDTO> getAllByLoginAndMethod(LocalDateTime since, LocalDateTime until, String login, String method){
+		String trueLogin = "%" + login + "%";
+		String trueMethod = "%" + method + "%";
+		try(Session session = reader.getSessionFactory().openSession()){
+			return session.createQuery("""
+							from TableRowDTO
+							where (dateTime >= :since  and dateTime <= :until)
+							and login like :login
+							and method like :method
+							""", TableRowDTO.class)
+					.setParameter("since", since)
+					.setParameter("until", until)
+					.setParameter("login", trueLogin)
+					.setParameter("method", trueMethod)
+					.list();
+		}
+	}
+
+	public List<TableRowDTO> getAllByLogin(LocalDateTime since, LocalDateTime until, String login){
+		String trueLogin = "%" + login + "%";
+		try(Session session = reader.getSessionFactory().openSession()){
+			return session.createQuery("""
+							from TableRowDTO
+							where (dateTime >= :since  and dateTime <= :until)
+							and login like :login
+							""", TableRowDTO.class)
+					.setParameter("since", since)
+					.setParameter("until", until)
+					.setParameter("login", trueLogin)
+					.list();
 		}
 	}
 
 	public List<TableRowDTO> getAllByDateRange(LocalDateTime since, LocalDateTime until){
 		try(Session session = reader.getSessionFactory().openSession()){
-			return session.createQuery("from TableRowDTO where dateTime > :since and dateTime < :until", TableRowDTO.class).setParameter("since", since).setParameter("until", until).list();
+			return session.createQuery("from TableRowDTO where dateTime > :since and dateTime < :until", TableRowDTO.class)
+					.setParameter("since", since)
+					.setParameter("until", until).list();
 		}
 	}
 

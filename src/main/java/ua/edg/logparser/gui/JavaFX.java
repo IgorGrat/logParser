@@ -13,6 +13,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import transimpex.logParser.TableRowDTO;
@@ -23,14 +24,15 @@ import ua.edg.logparser.parser.LocalFileRider;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class JavaFX extends Application{
 
 	public static final Set<String> LOGINS = new HashSet<>(LoginsAccessor.getLoginsList());
-	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+	public static final Set<String> AVAILABLE_METHODS = new HashSet<>();
+	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
 	private final TableColumn<TableRowDTO, LocalDateTime> tableColumnTime = new TableColumn<>("Час");
 	private final TableColumn<TableRowDTO, String> tableColumnLogin = new TableColumn<>("Логін");
@@ -57,8 +59,6 @@ public class JavaFX extends Application{
 	private LocalDateTime until = LocalDateTime.now();
 	private final List<TableRowDTO> tdoList = new ArrayList<>();
 
-	private final TableRowDAO tableRowDAO = new TableRowDAO();
-
 	/**
 	 * Starts the JavaFX application by initializing and setting up the primary stage,
 	 * including the layout, table configuration, user input fields, and event handling.
@@ -76,6 +76,7 @@ public class JavaFX extends Application{
 		// layout setup
 		VBox verticalLayout = new VBox(10);
 		verticalLayout.setPadding(new Insets(10));
+		VBox.setVgrow(tableShow, Priority.ALWAYS);
 		verticalLayout.getChildren().addAll(hint, tableShow);
 		verticalLayout.getChildren().add(new HBox(10, dateTimePickerSince, searchTimeSince, dateTimePickerUntil, searchTimeUntil, loginComboBox, methodComboBox, maskField, searchButton));
 
@@ -123,8 +124,6 @@ public class JavaFX extends Application{
 				}
 			}
 		});
-		tableColumnTime.setPrefWidth(120);
-
 		tableColumnLogin.setCellValueFactory(new PropertyValueFactory<>("login"));
 		tableColumnHost.setCellValueFactory(new PropertyValueFactory<>("host"));
 
@@ -151,12 +150,9 @@ public class JavaFX extends Application{
 				tableColumnClass, tableColumnMethod, tableColumnParam, tableColumnResponse);
 
 		// login ComboBox
-		loginComboBoxUpdateLogins();
-		// method ComboBox
-		methodComboBoxSetup();
+		loginComboBoxSetupLogins();
+
 		// events
-//		setDateTimePickerSinceAction();
-//		setDateTimePickerUntilAction();
 		setLoginComboBoxAction();
 		setMethodComboBoxAction();
 		setMaskFieldAction();
@@ -183,21 +179,33 @@ public class JavaFX extends Application{
 			LocalDate untilDate = dateTimePickerUntil.getDateTimeValue().toLocalDate();
 			since = LocalDateTime.of(sinceDate, LocalTime.parse(searchTimeSince.getText()));
 			until = LocalDateTime.of(untilDate, LocalTime.parse(searchTimeUntil.getText()));
+			LOGINS.clear();
 			tdoList.clear();
-			tdoList.addAll(tableRowDAO.getAllByDateRange(since, until));
 //			tdoList.addAll(getTDOList(since, until));
 		}
-		String[] searchValue = {loginComboBox.getEditor().getText(), methodComboBox.getEditor().getText(), maskField.getText()};
-		tableShow.setItems(FXCollections.observableArrayList(tdoList.stream()
-				.filter(tableRowDTO ->
-						tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) >= since.toEpochSecond(ZoneOffset.UTC) &&
-								tableRowDTO.getDateTime().toEpochSecond(ZoneOffset.UTC) <= until.toEpochSecond(ZoneOffset.UTC))
-				.filter(tableRowDTO -> !tableRowDTO.getMethod().contains("longPack"))
-				.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(searchValue[0].toLowerCase()))
-				.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(searchValue[1].toLowerCase()))
-				.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(searchValue[2].toLowerCase()))
-				.peek(tableRowDTO -> loginComboBoxAddLogins(tableRowDTO.getLogin()))
-				.toList()));
+		TableRowDAO tableRowDAO = new TableRowDAO();
+
+		String login = loginComboBox.getEditor().getText() == null ? "" : loginComboBox.getEditor().getText();
+		String method = methodComboBox.getEditor().getText() == null ? "" : methodComboBox.getEditor().getText();
+		String mask = maskField.getText() == null ? "" : maskField.getText();
+		if(!login.isBlank() && !method.isBlank())
+			tdoList.addAll(tableRowDAO.getAllByLoginAndMethod(since, until, login, method));
+		else if(!login.isBlank()) tdoList.addAll(tableRowDAO.getAllByLogin(since, until, login));
+		else if(!mask.isBlank()) tdoList.addAll(tableRowDAO.getAllByMask(since, until, mask));
+		else tdoList.addAll(tableRowDAO.getAllByDateRange(since, until));
+
+		Predicate<TableRowDTO> noLongPackMethod = tableRowDTO ->
+				!tableRowDTO.getMethod().contains("longPack");
+
+		List<TableRowDTO> list = tdoList.stream()
+				.filter(noLongPackMethod)
+				.filter(tableRowDTO -> tableRowDTO.getLogin().toLowerCase().contains(login.toLowerCase()))
+				.filter(tableRowDTO -> tableRowDTO.getMethod().toLowerCase().contains(method.toLowerCase()))
+				.filter(tableRowDTO -> tableRowDTO.toString().toLowerCase().contains(mask.toLowerCase()))
+				.toList();
+		methodComboBoxUpdateMethods(list);
+		loginComboBoxUpdateLogins(list);
+		tableShow.setItems(FXCollections.observableArrayList(list));
 	}
 
 	private void setTableShowItemsByHBOXValues(KeyEvent event){
@@ -223,47 +231,25 @@ public class JavaFX extends Application{
 		maskField.setOnKeyPressed(this::setTableShowItemsByHBOXValues);
 	}
 
-//	private void setDateTimePickerSinceAction(){
-//		dateTimePickerSince.setOnAction(event -> {
-//			Objects.requireNonNull(event);
-//			if(dateTimePickerSince.getDateTimeValue() != null){
-//				since = dateTimePickerSince.getDateTimeValue();
-//				tdoList.clear();
-//				tdoList.addAll(getTDOList(since, until));
-//			}
-//		});
-//	}
-//
-//	private void setDateTimePickerUntilAction(){
-//		dateTimePickerUntil.setOnAction(event -> {
-//			Objects.requireNonNull(event);
-//			if(dateTimePickerUntil.getDateTimeValue() != null){
-//				until = dateTimePickerUntil.getDateTimeValue();
-//				tdoList.clear();
-//				tdoList.addAll(getTDOList(since, until));
-//			}
-//		});
-//	}
-
-
-	private void methodComboBoxSetup(){
-		List<String> availableMethods = new ArrayList<>();
+	private void methodComboBoxUpdateMethods(List<TableRowDTO> tdoList){
+		AVAILABLE_METHODS.clear();
 		for(TableRowDTO tableRowDTO : tdoList){
-			if(!availableMethods.contains(tableRowDTO.getMethod())){
-				availableMethods.add(tableRowDTO.getMethod());
-			}
+			AVAILABLE_METHODS.add(tableRowDTO.getMethod());
 		}
-		methodComboBox.setItems(FXCollections.observableList(availableMethods));
+		methodComboBox.setItems(FXCollections.observableList(new ArrayList<>(AVAILABLE_METHODS)));
 	}
 
-	private void loginComboBoxUpdateLogins(){
+	private void loginComboBoxSetupLogins(){
 		ObservableList<String> loginsList = FXCollections.observableArrayList(LoginsAccessor.getLoginsList());
 		loginComboBox.setItems(loginsList);
 	}
 
-	private void loginComboBoxAddLogins(String login){
-		LOGINS.add(login);
-		loginComboBox.setItems(FXCollections.observableArrayList(LOGINS));
+	private void loginComboBoxUpdateLogins(List<TableRowDTO> tdoList){
+		LOGINS.clear();
+		for(TableRowDTO tableRowDTO : tdoList){
+			LOGINS.add(tableRowDTO.getLogin());
+		}
+		loginComboBox.setItems(FXCollections.observableList(new ArrayList<>(LOGINS)));
 	}
 
 	private void copyFromCellAction(){
