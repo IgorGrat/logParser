@@ -1,9 +1,7 @@
 package ua.edg.conector;
 
 import com.google.gson.Gson;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -20,7 +18,9 @@ public class LoginsAccessor{
 
 	private static final Gson gson = new Gson();
 
-	private record LoginDTO(List<String> logins){}
+	private record LoginDTO(List<String> logins){
+
+	}
 
 	private static List<String> parseLogins(){
 		try(HttpClient client = HttpClient.newHttpClient()){
@@ -31,12 +31,12 @@ public class LoginsAccessor{
 					.GET()
 					.build();
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-			assert gson != null;
-			return gson.fromJson(response.body(), LoginDTO.class).logins();
+			if(gson != null) return gson.fromJson(response.body(), LoginDTO.class).logins();
 		}
 		catch(Exception e){
 			System.err.println("Error fetching logins: " + e.getMessage());
 			return new ArrayList<>();
 		}
+		return new ArrayList<>();
 	}
 }

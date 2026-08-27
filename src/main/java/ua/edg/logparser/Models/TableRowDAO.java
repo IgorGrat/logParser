@@ -142,7 +142,7 @@ public class TableRowDAO{
 	private static void clearObjectFields(TableRowDTO tableRowDTO){
 		String serverResponse = tableRowDTO.getServerResponse().substring(tableRowDTO.getServerResponse().indexOf("process")).replace(")>", "");
 		String clazz = tableRowDTO.getClazz();
-		tableRowDTO.setId(null);
+//		tableRowDTO.setId(0L);
 		if(clazz.endsWith(".")) tableRowDTO.setClazz(clazz.substring(0, clazz.length() - 1));
 		tableRowDTO.setServerResponse(serverResponse);
 	}
