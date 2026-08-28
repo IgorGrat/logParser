@@ -83,13 +83,14 @@ public class TableRowDAO{
 		try(Session session = reader.getSessionFactory().openSession()){
 			return session.createQuery("""
 								from TableRowDTO
-								where (dateTime >= :since  and dateTime <= :until)
+								where dateTime between :since and :until
 								and (login like :mask
 								or host like :mask
 								or clazz like :mask
 								or method like :mask
 								or param like :mask
 								or serverResponse like :mask)
+								order by dateTime desc 
 							""", TableRowDTO.class)
 					.setParameter("since", since)
 					.setParameter("until", until)
@@ -99,14 +100,15 @@ public class TableRowDAO{
 	}
 
 	public List<TableRowDTO> getAllByLoginAndMethod(LocalDateTime since, LocalDateTime until, String login, String method){
-		String trueLogin = "%" + login + "%";
-		String trueMethod = "%" + method + "%";
+		String trueLogin = login + "%";
+		String trueMethod = method + "%";
 		try(Session session = reader.getSessionFactory().openSession()){
 			return session.createQuery("""
 							from TableRowDTO
-							where (dateTime >= :since  and dateTime <= :until)
+							where dateTime between :since and :until
 							and login like :login
 							and method like :method
+							order by dateTime desc 
 							""", TableRowDTO.class)
 					.setParameter("since", since)
 					.setParameter("until", until)
@@ -117,11 +119,11 @@ public class TableRowDAO{
 	}
 
 	public List<TableRowDTO> getAllByLogin(LocalDateTime since, LocalDateTime until, String login){
-		String trueLogin = "%" + login + "%";
+		String trueLogin =  login + "%";
 		try(Session session = reader.getSessionFactory().openSession()){
 			return session.createQuery("""
 							from TableRowDTO
-							where (dateTime >= :since  and dateTime <= :until)
+							where dateTime between :since and :until
 							and login like :login
 							""", TableRowDTO.class)
 					.setParameter("since", since)
