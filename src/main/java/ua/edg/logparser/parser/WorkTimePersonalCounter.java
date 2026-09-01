@@ -138,18 +138,33 @@ public class WorkTimePersonalCounter{
 
 		TableRowDAO tableRowDAO = new TableRowDAO();
 
-		List<TableRowDTO> dtos = tableRowDAO.getAllByDateRange(from_this_date, to_this_date);
-		for(TableRowDTO dto : dtos){
-			String login = dto.getLogin();
-			UserTimeCount utc = scope.get(login);
-			if(utc == null){
-				continue;
+		List<TableRowDTO> dtos = tableRowDAO.getWorkTimeByDateRange(
+				from_this_date,
+				to_this_date,
+				List.of(logins),
+				"getUserAttAction"
+		);
+
+		for (TableRowDTO dto : dtos) {
+			UserTimeCount utc = scope.get(dto.getLogin());
+			if (utc != null) {
+				utc.addActivity(dto.getDateTime());
 			}
-			if(dto.getMethod().equals("getUserAttAction")){
-				continue;
-			}
-			utc.addActivity(dto.getDateTime());
 		}
+
+//		List<TableRowDTO> dtos = tableRowDAO.getAllByDateRange(from_this_date, to_this_date);
+//		for(TableRowDTO dto : dtos){
+//			String login = dto.getLogin();
+//			UserTimeCount utc = scope.get(login);
+//			if(utc == null){
+//				continue;
+//			}
+//			if(dto.getMethod().equals("getUserAttAction")){
+//				continue;
+//			}
+//			utc.addActivity(dto.getDateTime());
+//		}
+
 //  LocalFileRider fileReader = new LocalFileRider(from_this_date, to_this_date){
 //    new LocalFileRider(from_this_date, to_this_date){
 //      @Override
