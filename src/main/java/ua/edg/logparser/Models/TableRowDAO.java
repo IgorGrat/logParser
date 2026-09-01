@@ -175,15 +175,14 @@ public class TableRowDAO{
 	){
 		try(Session session = reader.getSessionFactory().openSession()){
 			String sql = """
-					SELECT * FROM server_logs_2026
-					WHERE dateTime between :since AND :until
-					  AND (
-					      TIME(dateTime) > '08:00:00'
-					      OR TIME(dateTime) < '19:00:00'
-					  )
+					SELECT *
+					FROM server_logs_2026
+					WHERE dateTime BETWEEN :since AND :until
+					  AND TIME(dateTime) >= '08:00:00'
+					  AND TIME(dateTime) <= '19:00:00'
 					  AND login IN (:logins)
 					  AND method != :excludeMethod
-					ORDER BY dateTime desc
+					ORDER BY dateTime DESC
 					""";
 
 			return session.createNativeQuery(sql, TableRowDTO.class)
